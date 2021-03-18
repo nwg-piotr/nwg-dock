@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/joshuarubin/go-sway"
 )
+
+var descendants []sway.Node
 
 type task struct {
 	ID    string
@@ -58,30 +59,30 @@ func listTasks() ([]task, error) {
 	}
 
 	var tasks []task
-	// find tasks in workspaces
+	// find cons in workspaces recursively
 	for _, w := range workspaceNodes {
 		wsNum := workspaceNum(workspaces, w.Name)
+		descendants = nil
 		for _, con := range w.Nodes {
-			fmt.Println("con.Nodes = ", len(con.Nodes), "name = ", con.Name)
-			if len(con.Nodes) == 0 {
-				tasks = append(tasks, createTask(*con, wsNum))
-			}
+			findDescendants(*con)
+		}
+		// create tasks from cons which represent tasks
+		for _, con := range descendants {
+			tasks = append(tasks, createTask(con, wsNum))
 		}
 	}
 	return tasks, nil
 }
 
-/*func findTasks(node sway.Node, wsNum int64) []task {
-	nodes = *node.Nodes
-	for node := range node.Nodes {
-		if len(node.Nodes) == 0 {
-			return createTask(node, wsNum)
-		} else {
-			return findTasks(node, wsNum)
+func findDescendants(con sway.Node) {
+	if len(con.Nodes) > 0 {
+		for _, node := range con.Nodes {
+			findDescendants(*node)
 		}
+	} else {
+		descendants = append(descendants, con)
 	}
-
-}*/
+}
 
 func createTask(con sway.Node, wsNum int64) task {
 	t := task{}
