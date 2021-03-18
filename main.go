@@ -1,57 +1,20 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"strings"
-	"time"
 
 	"github.com/dlasky/gotk3-layershell/layershell"
 	"github.com/gotk3/gotk3/gtk"
-
-	"github.com/joshuarubin/go-sway"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	client, err := sway.New(ctx)
+	tasks, err := listTasks()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Couldn't list tasks:", err)
 	}
-	tree, _ := client.GetTree(ctx)
-
-	nodes := tree.Nodes
-
-	var outputs []*sway.Node
-	for _, n := range nodes {
-		if n.Type == "output" && !strings.HasPrefix(n.Name, "__") {
-			outputs = append(outputs, n)
-		}
-	}
-
-	var workspaces []*sway.Node
-	for _, o := range outputs {
-		oNodes := o.Nodes
-		for _, n := range oNodes {
-			if n.Type == "workspace" {
-				workspaces = append(workspaces, n)
-			}
-		}
-	}
-	for _, w := range workspaces {
-		wNodes := w.Nodes
-		fmt.Printf("Workspace %s:\n", w.Name)
-		for _, con := range wNodes {
-			if con.AppID != nil {
-				fmt.Println(*con.AppID, con.Name, *con.PID)
-			} else {
-				wp := *con.WindowProperties
-				fmt.Println(wp.Class, con.Name)
-			}
-		}
+	for _, task := range tasks {
+		fmt.Printf("%s on WS %v, PID %v, Name: '%s'\n", task.ID, task.WsNum, task.PID, task.Name)
 	}
 
 	// Initialize GTK without parsing any command line arguments.
