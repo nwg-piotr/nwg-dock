@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ type task struct {
 	WsNum int64
 }
 
+// list sway tree, return tasks sorted by workspace numbers
 func listTasks() ([]task, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -71,6 +73,10 @@ func listTasks() ([]task, error) {
 			tasks = append(tasks, createTask(con, wsNum))
 		}
 	}
+	sort.Slice(tasks, func(i int, j int) bool {
+		return tasks[i].WsNum < tasks[j].WsNum
+	})
+
 	return tasks, nil
 }
 
@@ -95,6 +101,7 @@ func createTask(con sway.Node, wsNum int64) task {
 	t.Name = con.Name
 	t.PID = *con.PID
 	t.WsNum = wsNum
+
 	return t
 }
 

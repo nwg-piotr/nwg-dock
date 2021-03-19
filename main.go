@@ -13,6 +13,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Couldn't list tasks:", err)
 	}
+
 	for _, task := range tasks {
 		fmt.Printf("%s on WS %v, PID %v, Name: '%s'\n", task.ID, task.WsNum, task.PID, task.Name)
 	}
