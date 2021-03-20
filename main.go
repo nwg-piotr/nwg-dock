@@ -8,7 +8,14 @@ import (
     "github.com/gotk3/gotk3/gtk"
 )
 
+var (
+    appDirs []string
+)
+
 func main() {
+    appDirs = getAppDirs()
+    fmt.Println(appDirs)
+
     tasks, err := listTasks()
     if err != nil {
         log.Fatal("Couldn't list tasks:", err)

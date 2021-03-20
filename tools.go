@@ -2,8 +2,12 @@ package main
 
 import (
     "context"
+    "errors"
     "fmt"
+    "io/ioutil"
     "log"
+    "os"
+    "path/filepath"
     "sort"
     "strings"
     "time"
@@ -126,6 +130,8 @@ func createButton(iconName string, wsNum int64) *gtk.Button {
         button.SetAlwaysShowImage(true)
         button.SetLabel(fmt.Sprintf("%2d", wsNum))
     } else {
+        icon, err := getIcon(iconName, appDirs)
+        fmt.Println(icon, err)
         button.SetLabel(iconName)
     }
     (*button).SetSizeRequest(60, 60)
@@ -149,7 +155,104 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
     }
     pixbuf, err := iconTheme.LoadIcon(icon, size, gtk.ICON_LOOKUP_FORCE_SIZE)
     if err != nil {
-        return nil, err
+        ico, err := getIcon(icon, appDirs)
+        if err != nil {
+            return nil, err
+        }
+        pixbuf, err := iconTheme.LoadIcon(ico, size, gtk.ICON_LOOKUP_FORCE_SIZE)
+        if err != nil {
+            return nil, err
+        }
+        return pixbuf, nil
     }
     return pixbuf, nil
+}
+
+func getAppDirs() []string {
+    var dirs []string
+    xdgDataDirs := ""
+
+    home := os.Getenv("HOME")
+    xdgDataHome := os.Getenv("XDG_DATA_HOME")
+    if os.Getenv("XDG_DATA_DIRS") != "" {
+        xdgDataDirs = os.Getenv("XDG_DATA_DIRS")
+    } else {
+        xdgDataDirs = "/usr/local/share/:/usr/share/"
+    }
+    if xdgDataHome != "" {
+        dirs = append(dirs, filepath.Join(xdgDataHome, "applications"))
+    } else if home != "" {
+        dirs = append(dirs, filepath.Join(home, ".local/share/applications"))
+    }
+    for _, d := range strings.Split(xdgDataDirs, ":") {
+        dirs = append(dirs, filepath.Join(d, "applications"))
+    }
+    flatpakDirs := []string{filepath.Join(home, ".local/share/flatpak/exports/share/applications"),
+        "/var/lib/flatpak/exports/share/applications"}
+
+    for _, d := range flatpakDirs {
+        if !isIn(dirs, d) {
+            dirs = append(dirs, d)
+        }
+    }
+    return dirs
+}
+
+func isIn(slice []string, val string) bool {
+    for _, item := range slice {
+        if item == val {
+            return true
+        }
+    }
+    return false
+}
+
+func getIcon(appName string, appDirs []string) (string, error) {
+    if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
+        return "gimp", nil
+    }
+    for _, d := range appDirs {
+        path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
+        p := ""
+        if pathExists(path) {
+            p = path
+        } else if pathExists(strings.ToLower(path)) {
+            p = strings.ToLower(path)
+        }
+        if p != "" {
+            lines, err := loadTextFile(p)
+            if err != nil {
+                return "", err
+            }
+            for _, line := range lines {
+                if strings.HasPrefix(strings.ToUpper(line), "ICON") {
+                    return strings.Split(line, "=")[1], nil
+                }
+            }
+        }
+    }
+    return "", errors.New("Couldn't find the icon")
+}
+
+func pathExists(name string) bool {
+    if _, err := os.Stat(name); err != nil {
+        if os.IsNotExist(err) {
+            return false
+        }
+    }
+    return true
+}
+
+func loadTextFile(path string) ([]string, error) {
+    bytes, err := ioutil.ReadFile(path)
+    if err != nil {
+        return nil, err
+    }
+    lines := strings.Split(string(bytes), "\n")
+    var output []string
+    for _, line := range lines {
+        line = strings.TrimSpace(line)
+        output = append(output, line)
+    }
+    return output, nil
 }
