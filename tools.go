@@ -76,10 +76,17 @@ func listTasks() ([]task, error) {
         for _, con := range w.Nodes {
             findDescendants(*con)
         }
+
         // create tasks from cons which represent tasks
         for _, con := range descendants {
             tasks = append(tasks, createTask(con, wsNum))
         }
+
+        fNodes := w.FloatingNodes
+        for _, con := range fNodes {
+            tasks = append(tasks, createTask(*con, wsNum))
+        }
+
     }
     sort.Slice(tasks, func(i int, j int) bool {
         return tasks[i].WsNum < tasks[j].WsNum
