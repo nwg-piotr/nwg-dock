@@ -152,7 +152,6 @@ func createImage(iconName string) (*gtk.Image, error) {
 
 func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
     if strings.HasPrefix(icon, "/") {
-        // pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, icon_size, icon_size)
         pixbuf, err := gdk.PixbufNewFromFileAtSize(icon, size, size)
         if err != nil {
             fmt.Println("Error Pixbuf.new_from_file_at_size: ", err)
