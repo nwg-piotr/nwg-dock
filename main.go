@@ -3,18 +3,30 @@ package main
 import (
     "fmt"
     "log"
+    "path/filepath"
 
     "github.com/dlasky/gotk3-layershell/layershell"
+    "github.com/gotk3/gotk3/gdk"
     "github.com/gotk3/gotk3/gtk"
 )
 
 var (
-    appDirs []string
+    appDirs         []string
+    configDirectory string
 )
 
 func main() {
+    configDirectory = configDir()
+    // if doesn't exist
+    createDir(configDirectory)
+    cssFile := filepath.Join(configDirectory, "style.css")
+    if pathExists(cssFile) {
+        fmt.Printf("File %s found\n", cssFile)
+    } else {
+        fmt.Printf("File %s not found\n", cssFile)
+    }
+
     appDirs = getAppDirs()
-    fmt.Println(appDirs)
 
     tasks, err := listTasks()
     if err != nil {
@@ -26,6 +38,17 @@ func main() {
     }
 
     gtk.Init(nil)
+
+    cssProvider, err := gtk.CssProviderNew()
+    if err != nil {
+        fmt.Println(err)
+    }
+    err = cssProvider.LoadFromPath(cssFile)
+    if err != nil {
+        fmt.Println(err)
+    }
+    screen, _ := gdk.ScreenGetDefault()
+    gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
     if err != nil {
@@ -51,11 +74,11 @@ func main() {
     win.Add(vbox)
 
     hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
-    vbox.PackStart(hbox, true, true, 6)
+    vbox.PackStart(hbox, true, true, 0)
 
     for _, task := range tasks {
         button := createButton(task.ID, task.WsNum)
-        hbox.PackStart(button, false, false, 6)
+        hbox.PackStart(button, false, false, 0)
     }
 
     win.ShowAll()

@@ -128,18 +128,21 @@ func createButton(iconName string, wsNum int64) *gtk.Button {
         button.SetImage(image)
         button.SetImagePosition(gtk.POS_TOP)
         button.SetAlwaysShowImage(true)
-        button.SetLabel(fmt.Sprintf("%2d", wsNum))
+        /*if wsNum == 3 {
+              button.SetLabel("")
+          } else {
+              button.SetLabel(fmt.Sprintf("%2d", wsNum))
+          }*/
     } else {
-        icon, err := getIcon(iconName, appDirs)
-        fmt.Println(icon, err)
+        //icon, err := getIcon(iconName, appDirs)
         button.SetLabel(iconName)
     }
-    (*button).SetSizeRequest(60, 60)
+    //(*button).SetSizeRequest(60, 60)
     return button
 }
 
 func createImage(iconName string) (*gtk.Image, error) {
-    pixbuf, err := createPixbuf(iconName, 30)
+    pixbuf, err := createPixbuf(iconName, 48)
     if err != nil {
         return nil, err
     }
@@ -166,6 +169,22 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
         return pixbuf, nil
     }
     return pixbuf, nil
+}
+
+func configDir() string {
+    if os.Getenv("XDG_CONFIG_HOME") != "" {
+        return (fmt.Sprintf("%s/nwg-dock", os.Getenv("XDG_CONFIG_HOME")))
+    }
+    return (fmt.Sprintf("%s/.config/nwg-dock", os.Getenv("HOME")))
+}
+
+func createDir(dir string) {
+    if _, err := os.Stat(dir); os.IsNotExist(err) {
+        err := os.MkdirAll(dir, os.ModePerm)
+        if err == nil {
+            fmt.Println("Creating dir:", dir)
+        }
+    }
 }
 
 func getAppDirs() []string {
