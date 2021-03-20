@@ -134,7 +134,6 @@ func createButton(iconName string, wsNum int64) *gtk.Button {
               button.SetLabel(fmt.Sprintf("%2d", wsNum))
           }*/
     } else {
-        //icon, err := getIcon(iconName, appDirs)
         button.SetLabel(iconName)
     }
     //(*button).SetSizeRequest(60, 60)
@@ -152,6 +151,16 @@ func createImage(iconName string) (*gtk.Image, error) {
 }
 
 func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
+    if strings.HasPrefix(icon, "/") {
+        // pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, icon_size, icon_size)
+        pixbuf, err := gdk.PixbufNewFromFileAtSize(icon, size, size)
+        if err != nil {
+            fmt.Println("Error Pixbuf.new_from_file_at_size: ", err)
+            return nil, err
+        }
+        return pixbuf, nil
+    }
+
     iconTheme, err := gtk.IconThemeGetDefault()
     if err != nil {
         log.Fatal("Couldn't get default theme: ", err)
@@ -162,6 +171,15 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
         if err != nil {
             return nil, err
         }
+
+        if strings.HasPrefix(ico, "/") {
+            pixbuf, err := gdk.PixbufNewFromFileAtSize(ico, size, size)
+            if err != nil {
+                return nil, err
+            }
+            return pixbuf, nil
+        }
+
         pixbuf, err := iconTheme.LoadIcon(ico, size, gtk.ICON_LOOKUP_FORCE_SIZE)
         if err != nil {
             return nil, err
