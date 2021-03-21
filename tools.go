@@ -130,7 +130,25 @@ func workspaceNum(workspaces []sway.Workspace, name string) int64 {
     return 0
 }
 
-func createButton(t task) *gtk.Button {
+func pinnedButton(ID string) *gtk.Button {
+    button, _ := gtk.ButtonNew()
+    image, err := createImage(ID)
+    if err == nil {
+        button.SetImage(image)
+        button.SetImagePosition(gtk.POS_TOP)
+        button.SetAlwaysShowImage(true)
+
+        /*button.Connect("clicked", func() {
+            onButtonClick(t.ID, t.conID)
+        })*/
+
+    } else {
+        button.SetLabel(ID)
+    }
+    return button
+}
+
+func taskButton(t task) *gtk.Button {
     button, _ := gtk.ButtonNew()
     image, err := createImage(t.ID)
     if err == nil {
