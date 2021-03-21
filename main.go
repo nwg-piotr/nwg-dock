@@ -23,7 +23,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
     mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
     vbox.PackStart(mainBox, false, false, 0)
     for _, task := range tasks {
-        button := createButton(task.ID, task.WsNum)
+        button := createButton(task)
         mainBox.PackStart(button, false, false, 0)
         mainBox.ShowAll()
     }

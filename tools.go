@@ -20,7 +20,8 @@ import (
 var descendants []sway.Node
 
 type task struct {
-    ID    string
+    conID int64
+    ID    string // will be created out of app_id or window class
     Name  string
     PID   uint32
     WsNum int64
@@ -106,6 +107,7 @@ func findDescendants(con sway.Node) {
 
 func createTask(con sway.Node, wsNum int64) task {
     t := task{}
+    t.conID = con.ID
     if con.AppID != nil {
         t.ID = *con.AppID
     } else {
@@ -128,22 +130,22 @@ func workspaceNum(workspaces []sway.Workspace, name string) int64 {
     return 0
 }
 
-func createButton(iconName string, wsNum int64) *gtk.Button {
+func createButton(t task) *gtk.Button {
     button, _ := gtk.ButtonNew()
-    image, err := createImage(iconName)
+    image, err := createImage(t.ID)
     if err == nil {
         button.SetImage(image)
         button.SetImagePosition(gtk.POS_TOP)
         button.SetAlwaysShowImage(true)
-        /*if wsNum == 3 {
-              button.SetLabel("")
-          } else {
-              button.SetLabel(fmt.Sprintf("%2d", wsNum))
-          }*/
+
+        button.Connect("clicked", func() {
+            cmd := fmt.Sprintf("[con_id=%v] focus", t.conID)
+            runCommand(cmd)
+        })
+
     } else {
-        button.SetLabel(iconName)
+        button.SetLabel(t.ID)
     }
-    //(*button).SetSizeRequest(60, 60)
     return button
 }
 
@@ -298,4 +300,15 @@ func loadTextFile(path string) ([]string, error) {
         output = append(output, line)
     }
     return output, nil
+}
+
+func runCommand(cmd string) {
+    ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+    defer cancel()
+
+    client, err := sway.New(ctx)
+    if err != nil {
+        log.Panic(err)
+    }
+    client.RunCommand(ctx, cmd)
 }
