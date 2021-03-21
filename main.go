@@ -15,6 +15,7 @@ var (
     appDirs         []string
     configDirectory string
     pinnedFile      string
+    pinned          []string
     oldTasks        []task
     mainBox         *gtk.Box
 )
@@ -23,11 +24,17 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
     mainBox.Destroy()
     mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
     vbox.PackStart(mainBox, false, false, 0)
-    for _, task := range tasks {
-        button := createButton(task)
+
+    for _, pin := range pinned {
+        button := pinnedButton(pin)
         mainBox.PackStart(button, false, false, 0)
-        mainBox.ShowAll()
     }
+
+    for _, task := range tasks {
+        button := taskButton(task)
+        mainBox.PackStart(button, false, false, 0)
+    }
+    mainBox.ShowAll()
 }
 
 func main() {
@@ -40,7 +47,13 @@ func main() {
         log.Panic("Couldn't determine cache directory location")
     }
     pinnedFile = filepath.Join(cacheDirectory, "nwg-dock-pinned")
-    fmt.Println(pinnedFile)
+
+    var err error
+    pinned, err = loadTextFile(pinnedFile)
+    if err != nil {
+        pinned = nil
+    }
+    fmt.Println(pinned)
 
     cssFile := filepath.Join(configDirectory, "style.css")
 
@@ -50,7 +63,7 @@ func main() {
 
     cssProvider, _ := gtk.CssProviderNew()
 
-    err := cssProvider.LoadFromPath(cssFile)
+    err = cssProvider.LoadFromPath(cssFile)
     if err != nil {
         fmt.Printf("%s file not found, using GTK styling\n", cssFile)
     } else {
@@ -96,7 +109,7 @@ func main() {
     glib.TimeoutAdd(uint(250), func() bool {
         currentTasks, _ := listTasks()
         if len(currentTasks) != len(oldTasks) {
-            fmt.Println("refreshig...")
+            fmt.Println("refreshing...")
             buildMainBox(currentTasks, vbox)
             oldTasks = currentTasks
         }
