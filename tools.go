@@ -139,8 +139,7 @@ func createButton(t task) *gtk.Button {
         button.SetAlwaysShowImage(true)
 
         button.Connect("clicked", func() {
-            cmd := fmt.Sprintf("[con_id=%v] focus", t.conID)
-            runCommand(cmd)
+            onButtonClick(t.ID, t.conID)
         })
 
     } else {
@@ -195,6 +194,17 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
         return pixbuf, nil
     }
     return pixbuf, nil
+}
+
+func cacheDir() string {
+    if os.Getenv("XDG_CACHE_HOME") != "" {
+        return os.Getenv("XDG_CONFIG_HOME")
+    }
+    if os.Getenv("HOME") != "" && pathExists(filepath.Join(os.Getenv("HOME"), ".cache")) {
+        p := filepath.Join(os.Getenv("HOME"), ".cache")
+        return p
+    }
+    return ""
 }
 
 func configDir() string {
@@ -279,6 +289,38 @@ func getIcon(appName string) (string, error) {
     return "", errors.New("Couldn't find the icon")
 }
 
+func getExec(appName string) (string, error) {
+    if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
+        appName = "gimp"
+    }
+    for _, d := range appDirs {
+        path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
+        p := ""
+        if pathExists(path) {
+            p = path
+        } else if pathExists(strings.ToLower(path)) {
+            p = strings.ToLower(path)
+        }
+        if p != "" {
+            lines, err := loadTextFile(p)
+            if err != nil {
+                return "", err
+            }
+            for _, line := range lines {
+                if strings.HasPrefix(strings.ToUpper(line), "EXEC") {
+                    l := line[5:]
+                    cutAt := strings.Index(l, "%")
+                    if cutAt != -1 {
+                        l = l[:cutAt-1]
+                    }
+                    return l, nil
+                }
+            }
+        }
+    }
+    return "", errors.New("Couldn't find the exec")
+}
+
 func pathExists(name string) bool {
     if _, err := os.Stat(name); err != nil {
         if os.IsNotExist(err) {
@@ -302,7 +344,14 @@ func loadTextFile(path string) ([]string, error) {
     return output, nil
 }
 
-func runCommand(cmd string) {
+func onButtonClick(ID string, conID int64) {
+    exec, err := getExec(ID)
+    if err != nil {
+        fmt.Println(err)
+    }
+    fmt.Println(exec)
+
+    cmd := fmt.Sprintf("[con_id=%v] focus", conID)
     ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
     defer cancel()
 

@@ -14,6 +14,7 @@ import (
 var (
     appDirs         []string
     configDirectory string
+    pinnedFile      string
     oldTasks        []task
     mainBox         *gtk.Box
 )
@@ -33,6 +34,13 @@ func main() {
     configDirectory = configDir()
     // if doesn't exist:
     createDir(configDirectory)
+
+    cacheDirectory := cacheDir()
+    if cacheDirectory == "" {
+        log.Panic("Couldn't determine cache directory location")
+    }
+    pinnedFile = filepath.Join(cacheDirectory, "nwg-dock-pinned")
+    fmt.Println(pinnedFile)
 
     cssFile := filepath.Join(configDirectory, "style.css")
 
