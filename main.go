@@ -7,48 +7,49 @@ import (
 
     "github.com/dlasky/gotk3-layershell/layershell"
     "github.com/gotk3/gotk3/gdk"
+    "github.com/gotk3/gotk3/glib"
     "github.com/gotk3/gotk3/gtk"
 )
 
 var (
     appDirs         []string
     configDirectory string
+    oldTasks        []task
+    mainBox         *gtk.Box
 )
+
+func buildMainBox(tasks []task, vbox *gtk.Box) {
+    mainBox.Destroy()
+    mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+    vbox.PackStart(mainBox, false, false, 0)
+    for _, task := range tasks {
+        button := createButton(task.ID, task.WsNum)
+        mainBox.PackStart(button, false, false, 0)
+        mainBox.ShowAll()
+    }
+}
 
 func main() {
     configDirectory = configDir()
-    // if doesn't exist
+    // if doesn't exist:
     createDir(configDirectory)
+
     cssFile := filepath.Join(configDirectory, "style.css")
-    if pathExists(cssFile) {
-        fmt.Printf("File %s found\n", cssFile)
-    } else {
-        fmt.Printf("File %s not found\n", cssFile)
-    }
 
     appDirs = getAppDirs()
 
-    tasks, err := listTasks()
-    if err != nil {
-        log.Fatal("Couldn't list tasks:", err)
-    }
-
-    for _, task := range tasks {
-        fmt.Printf("%s on WS %v, PID %v, Name: '%s'\n", task.ID, task.WsNum, task.PID, task.Name)
-    }
-
     gtk.Init(nil)
 
-    cssProvider, err := gtk.CssProviderNew()
+    cssProvider, _ := gtk.CssProviderNew()
+
+    err := cssProvider.LoadFromPath(cssFile)
     if err != nil {
-        fmt.Println(err)
+        fmt.Printf("%s file not found, using GTK styling\n", cssFile)
+    } else {
+        fmt.Printf("Using style: %s\n", cssFile)
+        screen, _ := gdk.ScreenGetDefault()
+        gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
     }
-    err = cssProvider.LoadFromPath(cssFile)
-    if err != nil {
-        fmt.Println(err)
-    }
-    screen, _ := gdk.ScreenGetDefault()
-    gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
     if err != nil {
@@ -73,13 +74,25 @@ func main() {
     vbox, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
     win.Add(vbox)
 
-    hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
-    vbox.PackStart(hbox, true, true, 0)
+    mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+    vbox.PackStart(mainBox, true, true, 0)
 
-    for _, task := range tasks {
-        button := createButton(task.ID, task.WsNum)
-        hbox.PackStart(button, false, false, 0)
+    tasks, err := listTasks()
+    if err != nil {
+        log.Fatal("Couldn't list tasks:", err)
     }
+    oldTasks = tasks
+
+    buildMainBox(tasks, vbox)
+
+    glib.TimeoutAdd(uint(250), func() bool {
+        currentTasks, _ := listTasks()
+        if len(currentTasks) != len(oldTasks) {
+            oldTasks = currentTasks
+            buildMainBox(currentTasks, vbox)
+        }
+        return true
+    })
 
     win.ShowAll()
     gtk.Main()
