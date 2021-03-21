@@ -175,7 +175,7 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
     }
     pixbuf, err := iconTheme.LoadIcon(icon, size, gtk.ICON_LOOKUP_FORCE_SIZE)
     if err != nil {
-        ico, err := getIcon(icon, appDirs)
+        ico, err := getIcon(icon)
         if err != nil {
             return nil, err
         }
@@ -252,7 +252,7 @@ func isIn(slice []string, val string) bool {
     return false
 }
 
-func getIcon(appName string, appDirs []string) (string, error) {
+func getIcon(appName string) (string, error) {
     if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
         return "gimp", nil
     }

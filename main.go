@@ -88,8 +88,9 @@ func main() {
     glib.TimeoutAdd(uint(250), func() bool {
         currentTasks, _ := listTasks()
         if len(currentTasks) != len(oldTasks) {
-            oldTasks = currentTasks
+            fmt.Println("refreshig...")
             buildMainBox(currentTasks, vbox)
+            oldTasks = currentTasks
         }
         return true
     })
