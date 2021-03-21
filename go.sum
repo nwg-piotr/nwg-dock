@@ -2,6 +2,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlasky/gotk3-layershell v0.0.0-20210206164207-f6312cc2dcb5 h1:ADhYx5Emh7N9TcL27+z/hLCcyPSqMxw5QlMjb3WGewg=
 github.com/dlasky/gotk3-layershell v0.0.0-20210206164207-f6312cc2dcb5/go.mod h1:ZBEO8HbSU9MVpVTmobAHR6/qYTFalYtZ+TXsDss+jHs=
+github.com/dlasky/gotk3-layershell v0.0.0-20210320144235-82afd7551e54 h1:aqyBURYn+3gyQZW6vVfFWmdddhDCJ39MEhii+UVB7aA=
+github.com/dlasky/gotk3-layershell v0.0.0-20210320144235-82afd7551e54/go.mod h1:d56Gslp3IaiT8lqxD/lO1Msz1wYgD8D/HTKHgSdg9tU=
 github.com/gotk3/gotk3 v0.5.2/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
 github.com/gotk3/gotk3 v0.5.3-0.20210223154815-289cfb6dbf32 h1:wE6C/HgLUBHi8YhHlCEulrmQMntVl4PFdh3kA0sWyAY=
 github.com/gotk3/gotk3 v0.5.3-0.20210223154815-289cfb6dbf32/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
