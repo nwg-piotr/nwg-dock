@@ -171,9 +171,10 @@ func taskButton(t task, instances []task) *gtk.Button {
 		button.SetLabel(strconv.Itoa(len(instances)))
 
 		if len(instances) == 1 {
-			button.Connect("clicked", func() {
+			/*button.Connect("clicked", func() {
 				focusCon(t.conID)
-			})
+			})*/
+			button.Connect("button_press_event", onSingleInstanceClick, t.conID)
 		} else {
 			button.Connect("clicked", func() {
 				menu := taskMenu(t.ID, instances)
@@ -185,6 +186,15 @@ func taskButton(t task, instances []task) *gtk.Button {
 		button.SetLabel(t.ID)
 	}
 	return button
+}
+
+func onSingleInstanceClick(btn *gtk.Button, event *gdk.Event, conID int64) {
+	eventButton := &gdk.EventButton{Event: event}
+	if eventButton.Button() == 1 {
+		focusCon(conID)
+	} else if eventButton.Button() == 3 {
+		fmt.Println("Right click")
+	}
 }
 
 func taskMenu(taskID string, instances []task) gtk.Menu {
