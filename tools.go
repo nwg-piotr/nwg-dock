@@ -9,6 +9,7 @@ import (
     "os"
     "path/filepath"
     "sort"
+    "strconv"
     "strings"
     "time"
 
@@ -147,6 +148,7 @@ func pinnedButton(ID string) *gtk.Button {
         button.SetImage(image)
         button.SetImagePosition(gtk.POS_TOP)
         button.SetAlwaysShowImage(true)
+        button.SetLabel("")
 
         /*button.Connect("clicked", func() {
             onButtonClick(t.ID, t.conID)
@@ -158,22 +160,44 @@ func pinnedButton(ID string) *gtk.Button {
     return button
 }
 
-func taskButton(t task) *gtk.Button {
+func taskButton(t task, instances []task) *gtk.Button {
+    fmt.Println("Creating button, conID = ", t.conID, t.ID)
     button, _ := gtk.ButtonNew()
     image, err := createImage(t.ID)
     if err == nil {
         button.SetImage(image)
         button.SetImagePosition(gtk.POS_TOP)
         button.SetAlwaysShowImage(true)
+        // TODO: instead of the label, we'll need some graphics later
+        button.SetLabel(strconv.Itoa(len(instances)))
 
-        button.Connect("clicked", func() {
-            onButtonClick(t.ID, t.conID)
-        })
+        if len(instances) == 1 {
+            button.Connect("clicked", func() {
+                focusCon(t.conID)
+            })
+        }
 
     } else {
         button.SetLabel(t.ID)
     }
     return button
+}
+
+func taskMenu(taskID string, instances []task) gtk.Menu {
+    menu, _ := gtk.MenuNew()
+
+    iconName, _ := getIcon(taskID)
+    for _, instance := range instances {
+        menuItem, _ := gtk.MenuItemNew()
+        hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
+        image, _ := createImage(iconName)
+        hbox.PackStart(image, false, false, 0)
+        label, _ := gtk.LabelNew(fmt.Sprintf("%s (%v)", instance.Name, instance.WsNum))
+        hbox.PackStart(label, false, false, 0)
+        menuItem.Add(hbox)
+        fmt.Println("MenuItem", iconName, instance.ID, instance.Name, instance.conID, instance.WsNum)
+    }
+    return *menu
 }
 
 func inPinned(taskID string) bool {
@@ -388,6 +412,18 @@ func onButtonClick(ID string, conID int64) {
     }
     fmt.Println(exec)
 
+    cmd := fmt.Sprintf("[con_id=%v] focus", conID)
+    ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+    defer cancel()
+
+    client, err := sway.New(ctx)
+    if err != nil {
+        log.Panic(err)
+    }
+    client.RunCommand(ctx, cmd)
+}
+
+func focusCon(conID int64) {
     cmd := fmt.Sprintf("[con_id=%v] focus", conID)
     ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
     defer cancel()

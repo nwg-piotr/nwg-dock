@@ -33,15 +33,22 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
     var alreadyAdded []string
     for _, task := range tasks {
         if !inPinned(task.ID) {
-            if !isIn(alreadyAdded, task.ID) {
-                button := taskButton(task)
+            instances := taskInstances(task.ID, tasks)
+            if len(instances) == 1 {
+                button := taskButton(task, instances)
+                /*button.Connect("clicked", func() {
+                    focusCon(task.conID)
+                })*/
+                mainBox.PackStart(button, false, false, 0)
+            } else if !isIn(alreadyAdded, task.ID) {
+                button := taskButton(task, instances)
                 mainBox.PackStart(button, false, false, 0)
                 alreadyAdded = append(alreadyAdded, task.ID)
+                taskMenu(task.ID, instances)
+            } else {
+                continue
             }
-            fmt.Println("alreadyAdded", alreadyAdded)
         }
-        f := len(taskInstances(task.ID, tasks))
-        fmt.Printf("Found %v instances of %s\n", f, task.ID)
     }
     mainBox.ShowAll()
 }
@@ -62,7 +69,6 @@ func main() {
     if err != nil {
         pinned = nil
     }
-    fmt.Println(pinned)
 
     cssFile := filepath.Join(configDirectory, "style.css")
 
