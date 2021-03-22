@@ -30,9 +30,18 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
         mainBox.PackStart(button, false, false, 0)
     }
 
+    var alreadyAdded []string
     for _, task := range tasks {
-        button := taskButton(task)
-        mainBox.PackStart(button, false, false, 0)
+        if !inPinned(task.ID) {
+            if !isIn(alreadyAdded, task.ID) {
+                button := taskButton(task)
+                mainBox.PackStart(button, false, false, 0)
+                alreadyAdded = append(alreadyAdded, task.ID)
+            }
+            fmt.Println("alreadyAdded", alreadyAdded)
+        }
+        f := len(taskInstances(task.ID, tasks))
+        fmt.Printf("Found %v instances of %s\n", f, task.ID)
     }
     mainBox.ShowAll()
 }

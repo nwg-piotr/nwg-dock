@@ -27,6 +27,16 @@ type task struct {
     WsNum int64
 }
 
+func taskInstances(ID string, tasks []task) []task {
+    var found []task
+    for _, t := range tasks {
+        if t.ID == ID {
+            found = append(found, t)
+        }
+    }
+    return found
+}
+
 // list sway tree, return tasks sorted by workspace numbers
 func listTasks() ([]task, error) {
     ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -164,6 +174,15 @@ func taskButton(t task) *gtk.Button {
         button.SetLabel(t.ID)
     }
     return button
+}
+
+func inPinned(taskID string) bool {
+    for _, id := range pinned {
+        if id == taskID {
+            return true
+        }
+    }
+    return false
 }
 
 func createImage(iconName string) (*gtk.Image, error) {
