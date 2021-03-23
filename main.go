@@ -27,6 +27,12 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
     mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
     vbox.PackStart(mainBox, false, false, 0)
 
+    var err error
+    pinned, err = loadTextFile(pinnedFile)
+    if err != nil {
+        pinned = nil
+    }
+
     for _, pin := range pinned {
         button := pinnedButton(pin)
         mainBox.PackStart(button, false, false, 0)
@@ -65,22 +71,14 @@ func main() {
         log.Panic("Couldn't determine cache directory location")
     }
     pinnedFile = filepath.Join(cacheDirectory, "nwg-dock-pinned")
-
-    var err error
-    pinned, err = loadTextFile(pinnedFile)
-    if err != nil {
-        pinned = nil
-    }
-
     cssFile := filepath.Join(configDirectory, "style.css")
-
     appDirs = getAppDirs()
 
     gtk.Init(nil)
 
     cssProvider, _ := gtk.CssProviderNew()
 
-    err = cssProvider.LoadFromPath(cssFile)
+    err := cssProvider.LoadFromPath(cssFile)
     if err != nil {
         fmt.Printf("%s file not found, using GTK styling\n", cssFile)
     } else {
