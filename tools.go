@@ -420,7 +420,7 @@ func getExec(appName string) (string, error) {
             }
         }
     }
-    return "", errors.New("Couldn't find the exec")
+    return appName, nil
 }
 
 func pathExists(name string) bool {
