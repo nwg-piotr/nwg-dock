@@ -80,7 +80,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	button, _ := gtk.ButtonNew()
-	image, err := createImage("view-grid", imgSizeDock)
+	image, err := createImage("start-here", imgSizeDock)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
