@@ -33,20 +33,34 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
         pinned = nil
     }
 
+    var alreadyAdded []string
     for _, pin := range pinned {
-        button := pinnedButton(pin)
-        mainBox.PackStart(button, false, false, 0)
+        if !inTasks(tasks, pin) {
+            button := pinnedButton(pin)
+            mainBox.PackStart(button, false, false, 0)
+        } else {
+            instances := taskInstances(pin, tasks)
+            task := instances[0]
+            if len(instances) == 1 {
+                button := taskButton(task, instances)
+                mainBox.PackStart(button, false, false, 0)
+            } else if !isIn(alreadyAdded, task.ID) {
+                button := taskButton(task, instances)
+                mainBox.PackStart(button, false, false, 0)
+                alreadyAdded = append(alreadyAdded, task.ID)
+                taskMenu(task.ID, instances)
+            } else {
+                continue
+            }
+        }
     }
 
-    var alreadyAdded []string
+    alreadyAdded = nil
     for _, task := range tasks {
         if !inPinned(task.ID) {
             instances := taskInstances(task.ID, tasks)
             if len(instances) == 1 {
                 button := taskButton(task, instances)
-                /*button.Connect("clicked", func() {
-                    focusCon(task.conID)
-                })*/
                 mainBox.PackStart(button, false, false, 0)
             } else if !isIn(alreadyAdded, task.ID) {
                 button := taskButton(task, instances)

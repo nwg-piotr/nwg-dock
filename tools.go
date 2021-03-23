@@ -7,6 +7,7 @@ import (
     "io/ioutil"
     "log"
     "os"
+    "os/exec"
     "path/filepath"
     "sort"
     "strconv"
@@ -150,9 +151,9 @@ func pinnedButton(ID string) *gtk.Button {
         button.SetAlwaysShowImage(true)
         button.SetLabel("")
 
-        /*button.Connect("clicked", func() {
-            onButtonClick(t.ID, t.conID)
-        })*/
+        button.Connect("clicked", func() {
+            launch(ID)
+        })
 
     } else {
         button.SetLabel(ID)
@@ -231,6 +232,15 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 func inPinned(taskID string) bool {
     for _, id := range pinned {
         if id == taskID {
+            return true
+        }
+    }
+    return false
+}
+
+func inTasks(tasks []task, pinID string) bool {
+    for _, task := range tasks {
+        if task.ID == pinID {
             return true
         }
     }
@@ -433,22 +443,24 @@ func loadTextFile(path string) ([]string, error) {
     return output, nil
 }
 
-func onButtonClick(ID string, conID int64) {
-    exec, err := getExec(ID)
+func launch(ID string) {
+    e, err := getExec(ID)
     if err != nil {
         fmt.Println(err)
     }
-    fmt.Println(exec)
+    fmt.Println(e)
+    elements := strings.Split(e, " ")
+    fmt.Println(elements)
+    cmd := exec.Command(elements[0], elements[1:]...)
 
-    cmd := fmt.Sprintf("[con_id=%v] focus", conID)
-    ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-    defer cancel()
+    go cmd.Run()
+    /*if !settings.Preferences.DontClose {
+        glib.TimeoutAdd(uint(100), func() bool {
+            gtk.MainQuit()
+            return false
+        })
 
-    client, err := sway.New(ctx)
-    if err != nil {
-        log.Panic(err)
-    }
-    client.RunCommand(ctx, cmd)
+    }*/
 }
 
 func focusCon(conID int64) {
