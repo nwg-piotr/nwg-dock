@@ -32,7 +32,7 @@ type task struct {
 func taskInstances(ID string, tasks []task) []task {
     var found []task
     for _, t := range tasks {
-        if t.ID == ID {
+        if strings.Contains(strings.ToUpper(t.ID), strings.ToUpper(ID)) {
             found = append(found, t)
         }
     }
@@ -231,7 +231,7 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 
 func inPinned(taskID string) bool {
     for _, id := range pinned {
-        if id == taskID {
+        if strings.Contains(taskID, id) {
             return true
         }
     }
@@ -240,7 +240,7 @@ func inPinned(taskID string) bool {
 
 func inTasks(tasks []task, pinID string) bool {
     for _, task := range tasks {
-        if task.ID == pinID {
+        if strings.Contains(strings.ToUpper(task.ID), strings.ToUpper(pinID)) {
             return true
         }
     }
@@ -393,15 +393,18 @@ func getExec(appName string) (string, error) {
         appName = "gimp"
     }
     for _, d := range appDirs {
-        path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
-        p := ""
-        if pathExists(path) {
-            p = path
-        } else if pathExists(strings.ToLower(path)) {
-            p = strings.ToLower(path)
+        files, _ := ioutil.ReadDir(d)
+        path := ""
+        for _, f := range files {
+            if strings.HasSuffix(f.Name(), ".desktop") &&
+                strings.Contains(strings.ToUpper(f.Name()), strings.ToUpper(appName)) {
+
+                path = filepath.Join(d, f.Name())
+                fmt.Println(path)
+            }
         }
-        if p != "" {
-            lines, err := loadTextFile(p)
+        if path != "" {
+            lines, err := loadTextFile(path)
             if err != nil {
                 return "", err
             }
