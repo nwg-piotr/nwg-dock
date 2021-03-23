@@ -18,7 +18,7 @@ var (
     pinned          []string
     oldTasks        []task
     mainBox         *gtk.Box
-    imgSizeDock     = 48
+    imgSizeDock     = 52
     imgSizeMenu     = 30
 )
 
