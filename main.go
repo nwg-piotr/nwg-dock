@@ -28,6 +28,8 @@ var (
 	mainBox         *gtk.Box
 	imgSizeDock     = 52
 	imgSizeMenu     = 30
+	m1              gtk.Menu
+	m2              gtk.Menu
 )
 
 // Flags

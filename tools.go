@@ -184,6 +184,8 @@ func taskButton(t task, instances []task) *gtk.Button {
 						focusCon(t.conID)
 						return true
 					} else if btnEvent.Button() == 3 {
+						contextMenu := taskMenuContext(t.ID, instances)
+						contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
 						fmt.Println("Pressed 3, t.conID =", t.conID)
 						return true
 					}
@@ -191,9 +193,24 @@ func taskButton(t task, instances []task) *gtk.Button {
 				return false
 			})
 		} else {
-			menu := taskMenu(t.ID, instances)
-			button.Connect("clicked", func() {
-				menu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+			/*button.Connect("clicked", func() {
+				fmt.Println("clicked")
+				m1 = taskMenu(t.ID, instances)
+				m1.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+			})*/
+			button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
+				btnEvent := gdk.EventButtonNewFromEvent(e)
+				if btnEvent.Button() == 1 {
+					menu := taskMenu(t.ID, instances)
+					menu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+					return true
+				} else if btnEvent.Button() == 3 {
+					contextMenu := taskMenuContext(t.ID, instances)
+					contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+					fmt.Println("Pressed 3, t.conID =", t.conID)
+					return true
+				}
+				return false
 			})
 		}
 
@@ -211,7 +228,33 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
-		image, _ := createImage(iconName, imgSizeMenu)
+		image, _ := gtk.ImageNewFromIconName(iconName, gtk.ICON_SIZE_MENU)
+		hbox.PackStart(image, false, false, 0)
+		title := instance.Name
+		if len(title) > 60 {
+			title = title[:60]
+		}
+		label, _ := gtk.LabelNew(fmt.Sprintf("%s (%v)", title, instance.WsNum))
+		hbox.PackStart(label, false, false, 0)
+		menuItem.Add(hbox)
+		menu.Append(menuItem)
+		conID := instance.conID
+		menuItem.Connect("activate", func() {
+			focusCon(conID)
+		})
+		menu.ShowAll()
+	}
+	return *menu
+}
+
+func taskMenuContext(taskID string, instances []task) gtk.Menu {
+	menu, _ := gtk.MenuNew()
+	menu.SetReserveToggleSize(false)
+
+	for _, instance := range instances {
+		menuItem, _ := gtk.MenuItemNew()
+		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
+		image, _ := gtk.ImageNewFromIconName("window-close", gtk.ICON_SIZE_MENU)
 		hbox.PackStart(image, false, false, 0)
 		title := instance.Name
 		if len(title) > 60 {
