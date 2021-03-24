@@ -11,6 +11,7 @@ build:
 
 install:
 	cp bin/nwg-dock /usr/bin
+	cp stuff/nwggrid.svg /usr/share/pixmaps
 
 uninstall:
 	rm /usr/bin/nwg-dock

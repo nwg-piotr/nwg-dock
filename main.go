@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -16,6 +17,8 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+const version = "0.0.1"
+
 var (
 	appDirs         []string
 	configDirectory string
@@ -26,6 +29,11 @@ var (
 	imgSizeDock     = 52
 	imgSizeMenu     = 30
 )
+
+// Flags
+var cssFileName = flag.String("s", "style.css", "Styling: css file name")
+var displayVersion = flag.Bool("v", false, "display Version information")
+var permanent = flag.Bool("p", false, "Permanent: don't close the dock (default false)")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -80,7 +88,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	button, _ := gtk.ButtonNew()
-	image, err := createImage("start-here", imgSizeDock)
+	image, err := createImage("nwggrid", imgSizeDock)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
@@ -88,7 +96,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		button.SetLabel("")
 
 		button.Connect("clicked", func() {
-			launch("nwggrid")
+			launch("nwggrid -p")
 		})
 	}
 	mainBox.PackStart(button, false, false, 0)
@@ -126,6 +134,13 @@ func main() {
 	}
 	defer lockFile.Close()
 
+	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("nwgocc version %s\n", version)
+		os.Exit(0)
+	}
+
 	configDirectory = configDir()
 	// if doesn't exist:
 	createDir(configDirectory)
@@ -135,7 +150,7 @@ func main() {
 		log.Panic("Couldn't determine cache directory location")
 	}
 	pinnedFile = filepath.Join(cacheDirectory, "nwg-dock-pinned")
-	cssFile := filepath.Join(configDirectory, "style.css")
+	cssFile := filepath.Join(configDirectory, *cssFileName)
 	appDirs = getAppDirs()
 
 	gtk.Init(nil)
@@ -157,6 +172,9 @@ func main() {
 	}
 	layershell.InitForWindow(win)
 
+	// TODO: Future positioning: when the window takes all the width/height, we'll turn this on.
+	// layershell.AutoExclusiveZoneEnable(win)
+
 	layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, false)
 	layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
 	layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_RIGHT, false)
@@ -169,6 +187,23 @@ func main() {
 
 	win.Connect("destroy", func() {
 		gtk.MainQuit()
+	})
+
+	// Close the window on leave, but not immediately, to avoid accidental closes
+	var src glib.SourceHandle
+	win.Connect("leave-notify-event", func() {
+		if !*permanent {
+			src, err = glib.TimeoutAdd(uint(1000), func() bool {
+				gtk.MainQuit()
+				return false
+			})
+		}
+	})
+
+	win.Connect("enter-notify-event", func() {
+		if src > 0 {
+			glib.SourceRemove(src)
+		}
 	})
 
 	vbox, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)

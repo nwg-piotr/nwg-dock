@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gotk3/gotk3/gdk"
+	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/joshuarubin/go-sway"
 )
@@ -477,13 +478,13 @@ func launch(ID string) {
 	cmd := exec.Command(elements[0], elements[1:]...)
 
 	go cmd.Run()
-	/*if !settings.Preferences.DontClose {
-	    glib.TimeoutAdd(uint(100), func() bool {
-	        gtk.MainQuit()
-	        return false
-	    })
 
-	}*/
+	if !*permanent {
+		glib.TimeoutAdd(uint(100), func() bool {
+			gtk.MainQuit()
+			return false
+		})
+	}
 }
 
 func focusCon(conID int64) {
@@ -496,6 +497,13 @@ func focusCon(conID int64) {
 		log.Panic(err)
 	}
 	client.RunCommand(ctx, cmd)
+
+    if !*permanent {
+		glib.TimeoutAdd(uint(100), func() bool {
+			gtk.MainQuit()
+			return false
+		})
+	}
 }
 
 func killCon(conID int64) {
@@ -508,4 +516,11 @@ func killCon(conID int64) {
 		log.Panic(err)
 	}
 	client.RunCommand(ctx, cmd)
+}
+
+func handleKeyboard(window *gtk.Window, event *gdk.Event) {
+	key := &gdk.EventKey{Event: event}
+	if key.KeyVal() == gdk.KEY_Escape {
+		gtk.MainQuit()
+	}
 }
