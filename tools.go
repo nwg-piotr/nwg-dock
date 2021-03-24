@@ -498,7 +498,7 @@ func focusCon(conID int64) {
 	}
 	client.RunCommand(ctx, cmd)
 
-    if !*permanent {
+	if !*permanent {
 		glib.TimeoutAdd(uint(100), func() bool {
 			gtk.MainQuit()
 			return false
