@@ -30,6 +30,7 @@ var (
 	imgSizeMenu     = 30
 	m1              gtk.Menu
 	m2              gtk.Menu
+	src             glib.SourceHandle
 )
 
 // Flags
@@ -100,6 +101,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		button.Connect("clicked", func() {
 			launch("nwggrid -p")
 		})
+		button.Connect("enter-notify-event", cancelClose)
 	}
 	mainBox.PackStart(button, false, false, 0)
 	mainBox.ShowAll()
@@ -192,7 +194,7 @@ func main() {
 	})
 
 	// Close the window on leave, but not immediately, to avoid accidental closes
-	var src glib.SourceHandle
+
 	win.Connect("leave-notify-event", func() {
 		if !*permanent {
 			src, err = glib.TimeoutAdd(uint(1000), func() bool {
@@ -203,9 +205,7 @@ func main() {
 	})
 
 	win.Connect("enter-notify-event", func() {
-		if src > 0 {
-			glib.SourceRemove(src)
-		}
+		cancelClose()
 	})
 
 	vbox, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)

@@ -159,7 +159,21 @@ func pinnedButton(ID string) *gtk.Button {
 	} else {
 		button.SetLabel(ID)
 	}
+	button.Connect("enter-notify-event", cancelClose)
 	return button
+}
+
+/*
+Window on-leave-notify event calls gtk.MainQuit() with glib Timeout 1000 ms.
+We might have left the window by accident, so let's clear the timeout if window re-entered.
+Furthermore - hovering a button triggers window on-leave-notify event, and the timeout
+needs to be cleared as well.
+*/
+func cancelClose() {
+	if src > 0 {
+		glib.SourceRemove(src)
+		src = 0
+	}
 }
 
 func taskButton(t task, instances []task) *gtk.Button {
@@ -171,6 +185,8 @@ func taskButton(t task, instances []task) *gtk.Button {
 		button.SetAlwaysShowImage(true)
 		// TODO: instead of the label, we'll need some graphics later
 		button.SetLabel(strconv.Itoa(len(instances)))
+
+		button.Connect("enter-notify-event", cancelClose)
 
 		if len(instances) == 1 {
 			button.Connect("event", func(btn *gtk.Button, e *gdk.Event) bool {
