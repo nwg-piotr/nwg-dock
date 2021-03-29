@@ -27,9 +27,6 @@ var (
 	oldTasks        []task
 	mainBox         *gtk.Box
 	imgSizeDock     = 52
-	imgSizeMenu     = 30
-	m1              gtk.Menu
-	m2              gtk.Menu
 	src             glib.SourceHandle
 	refresh         bool // we will use this to trigger rebuilding mainBox
 )
@@ -111,6 +108,13 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 }
 
 func main() {
+	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("nwgocc version %s\n", version)
+		os.Exit(0)
+	}
+
 	// Gentle SIGTERM handler thanks to reiki4040 https://gist.github.com/reiki4040/be3705f307d3cd136e85
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
@@ -140,13 +144,6 @@ func main() {
 		os.Exit(0)
 	}
 	defer lockFile.Close()
-
-	flag.Parse()
-
-	if *displayVersion {
-		fmt.Printf("nwgocc version %s\n", version)
-		os.Exit(0)
-	}
 
 	configDirectory = configDir()
 	// if doesn't exist:
@@ -225,7 +222,7 @@ func main() {
 
 	buildMainBox(tasks, vbox)
 
-	glib.TimeoutAdd(uint(250), func() bool {
+	glib.TimeoutAdd(uint(150), func() bool {
 		currentTasks, _ := listTasks()
 		if len(currentTasks) != len(oldTasks) || refresh {
 			fmt.Println("refreshing...")

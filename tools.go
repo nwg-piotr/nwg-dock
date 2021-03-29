@@ -375,8 +375,13 @@ func inTasks(tasks []task, pinID string) bool {
 	return false
 }
 
-func createImage(iconName string, size int) (*gtk.Image, error) {
-	pixbuf, err := createPixbuf(iconName, size)
+func createImage(appID string, size int) (*gtk.Image, error) {
+	name, err := getIcon(appID)
+	if err != nil {
+		name = appID
+	}
+	fmt.Println("appID", appID, "name = ", name)
+	pixbuf, err := createPixbuf(name, size)
 	if err != nil {
 		return nil, err
 	}
@@ -509,10 +514,19 @@ func isIn(slice []string, val string) bool {
 	return false
 }
 
+var exceptions = map[string]string{
+	"gimp":  "gimp",
+	"pamac": "system-software-install",
+}
+
 func getIcon(appName string) (string, error) {
-	if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
-		return "gimp", nil
+	// Exceptions for apps which app_idd varies from their .desktop file name
+	for key, value := range exceptions {
+		if strings.HasPrefix(appName, key) {
+			return value, nil
+		}
 	}
+
 	for _, d := range appDirs {
 		path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
 		p := ""
