@@ -31,12 +31,14 @@ var (
 	m1              gtk.Menu
 	m2              gtk.Menu
 	src             glib.SourceHandle
+	refresh         bool // we will use this to trigger rebuilding mainBox
 )
 
 // Flags
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
 var displayVersion = flag.Bool("v", false, "display Version information")
-var permanent = flag.Bool("p", false, "Permanent: don't close the dock (default false)")
+var autohide = flag.Bool("a", false, "Auto-hide: close window when left or button clicked")
+var numWS = flag.Int("w", 8, "number of Workspaces you use")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -48,6 +50,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	if err != nil {
 		pinned = nil
 	}
+	fmt.Println("pinned", pinned)
 
 	var alreadyAdded []string
 	for _, pin := range pinned {
@@ -196,7 +199,7 @@ func main() {
 	// Close the window on leave, but not immediately, to avoid accidental closes
 
 	win.Connect("leave-notify-event", func() {
-		if !*permanent {
+		if *autohide {
 			src, err = glib.TimeoutAdd(uint(1000), func() bool {
 				gtk.MainQuit()
 				return false
@@ -224,10 +227,11 @@ func main() {
 
 	glib.TimeoutAdd(uint(250), func() bool {
 		currentTasks, _ := listTasks()
-		if len(currentTasks) != len(oldTasks) {
+		if len(currentTasks) != len(oldTasks) || refresh {
 			fmt.Println("refreshing...")
 			buildMainBox(currentTasks, vbox)
 			oldTasks = currentTasks
+			refresh = false
 		}
 		return true
 	})

@@ -156,11 +156,37 @@ func pinnedButton(ID string) *gtk.Button {
 			launch(ID)
 		})
 
+		button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
+			btnEvent := gdk.EventButtonNewFromEvent(e)
+			if btnEvent.Button() == 1 {
+				launch(ID)
+				return true
+			} else if btnEvent.Button() == 3 {
+				contextMenu := pinnedMenuContext(ID)
+				contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+				return true
+			}
+			return false
+		})
+
 	} else {
 		button.SetLabel(ID)
 	}
 	button.Connect("enter-notify-event", cancelClose)
 	return button
+}
+
+func pinnedMenuContext(taskID string) gtk.Menu {
+	menu, _ := gtk.MenuNew()
+	// menu.SetReserveToggleSize(false)
+	menuItem, _ := gtk.MenuItemNewWithLabel("Unpin")
+	menuItem.Connect("activate", func() {
+		unpinTask(taskID)
+	})
+	menu.Append(menuItem)
+
+	menu.ShowAll()
+	return *menu
 }
 
 /*
@@ -202,7 +228,6 @@ func taskButton(t task, instances []task) *gtk.Button {
 					} else if btnEvent.Button() == 3 {
 						contextMenu := taskMenuContext(t.ID, instances)
 						contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
-						fmt.Println("Pressed 3, t.conID =", t.conID)
 						return true
 					}
 				}
@@ -238,7 +263,7 @@ func taskButton(t task, instances []task) *gtk.Button {
 
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	menu.SetReserveToggleSize(false)
+	// menu.SetReserveToggleSize(false)
 
 	iconName, _ := getIcon(taskID)
 	for _, instance := range instances {
@@ -247,8 +272,8 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 		image, _ := gtk.ImageNewFromIconName(iconName, gtk.ICON_SIZE_MENU)
 		hbox.PackStart(image, false, false, 0)
 		title := instance.Name
-		if len(title) > 60 {
-			title = title[:60]
+		if len(title) > 20 {
+			title = title[:20]
 		}
 		label, _ := gtk.LabelNew(fmt.Sprintf("%s (%v)", title, instance.WsNum))
 		hbox.PackStart(label, false, false, 0)
@@ -258,40 +283,83 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 		menuItem.Connect("activate", func() {
 			focusCon(conID)
 		})
-		menu.ShowAll()
+
 	}
+	menu.ShowAll()
 	return *menu
 }
 
 func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	menu.SetReserveToggleSize(false)
+	//menu.SetReserveToggleSize(false)
 
+	iconName, _ := getIcon(taskID)
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
-		image, _ := gtk.ImageNewFromIconName("window-close", gtk.ICON_SIZE_MENU)
+		//image, _ := gtk.ImageNewFromIconName("window-close", gtk.ICON_SIZE_MENU)
+		image, _ := gtk.ImageNewFromIconName(iconName, gtk.ICON_SIZE_MENU)
 		hbox.PackStart(image, false, false, 0)
 		title := instance.Name
-		if len(title) > 60 {
-			title = title[:60]
+		if len(title) > 20 {
+			title = title[:20]
 		}
 		label, _ := gtk.LabelNew(fmt.Sprintf("%s (%v)", title, instance.WsNum))
 		hbox.PackStart(label, false, false, 0)
 		menuItem.Add(hbox)
 		menu.Append(menuItem)
+
+		submenu, _ := gtk.MenuNew()
+		subitem, _ := gtk.MenuItemNewWithLabel("Close")
+		submenu.Append(subitem)
+
 		conID := instance.conID
-		menuItem.Connect("activate", func() {
-			focusCon(conID)
+		subitem.Connect("activate", func() {
+			killCon(conID)
 		})
-		menu.ShowAll()
+		for i := 1; i < *numWS+1; i++ {
+			subitem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("To WS %v", i))
+			target := i
+			subitem.Connect("activate", func() {
+				con2WS(conID, target)
+			})
+			submenu.Append(subitem)
+		}
+
+		menuItem.SetSubmenu(submenu)
 	}
+	separator, _ := gtk.SeparatorMenuItemNew()
+	menu.Append(separator)
+
+	item, _ := gtk.MenuItemNewWithLabel("New window")
+	item.Connect("activate", func() {
+		launch(taskID)
+	})
+	menu.Append(item)
+
+	pinItem, _ := gtk.MenuItemNew()
+	if !inPinned(taskID) {
+		pinItem.SetLabel("Pin")
+		pinItem.Connect("activate", func() {
+			fmt.Println("pin", taskID)
+			fmt.Println("unpin", taskID)
+			pinTask(taskID)
+		})
+	} else {
+		pinItem.SetLabel("Unpin")
+		pinItem.Connect("activate", func() {
+			unpinTask(taskID)
+		})
+	}
+	menu.Append(pinItem)
+
+	menu.ShowAll()
 	return *menu
 }
 
 func inPinned(taskID string) bool {
 	for _, id := range pinned {
-		if strings.Contains(taskID, id) {
+		if strings.TrimSpace(taskID) == strings.TrimSpace(id) {
 			return true
 		}
 	}
@@ -300,7 +368,7 @@ func inPinned(taskID string) bool {
 
 func inTasks(tasks []task, pinID string) bool {
 	for _, task := range tasks {
-		if strings.Contains(strings.ToUpper(task.ID), strings.ToUpper(pinID)) {
+		if strings.TrimSpace(task.ID) == strings.TrimSpace(pinID) {
 			return true
 		}
 	}
@@ -521,9 +589,63 @@ func loadTextFile(path string) ([]string, error) {
 	var output []string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		output = append(output, line)
+		if line != "" {
+			output = append(output, line)
+		}
+
 	}
 	return output, nil
+}
+
+func pinTask(itemID string) {
+	for _, item := range pinned {
+		if item == itemID {
+			fmt.Println(item, "already pinned")
+			return
+		}
+	}
+	pinned = append(pinned, itemID)
+	savePinned()
+	refresh = true
+}
+
+func unpinTask(itemID string) {
+	fmt.Println(pinned)
+	pinned = remove(pinned, itemID)
+	fmt.Println(pinned)
+	savePinned()
+	refresh = true
+}
+
+func remove(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
+func savePinned() {
+	f, err := os.OpenFile(pinnedFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	for _, line := range pinned {
+		if line != "" {
+			_, err := f.WriteString(line + "\n")
+
+			if err != nil {
+				fmt.Println("Error saving pinned", err)
+			}
+		}
+
+	}
+
+	fmt.Println("pinned saved")
 }
 
 func launch(ID string) {
@@ -538,8 +660,8 @@ func launch(ID string) {
 
 	go cmd.Run()
 
-	if !*permanent {
-		glib.TimeoutAdd(uint(100), func() bool {
+	if *autohide {
+		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
 			gtk.MainQuit()
 			return false
 		})
@@ -557,8 +679,8 @@ func focusCon(conID int64) {
 	}
 	client.RunCommand(ctx, cmd)
 
-	if !*permanent {
-		glib.TimeoutAdd(uint(100), func() bool {
+	if *autohide {
+		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
 			gtk.MainQuit()
 			return false
 		})
@@ -575,6 +697,33 @@ func killCon(conID int64) {
 		log.Panic(err)
 	}
 	client.RunCommand(ctx, cmd)
+
+	if *autohide {
+		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+			gtk.MainQuit()
+			return false
+		})
+	}
+}
+
+func con2WS(conID int64, wsNum int) {
+	cmd := fmt.Sprintf("[con_id=%v] move to workspace number %v", conID, wsNum)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	client, err := sway.New(ctx)
+	if err != nil {
+		log.Panic(err)
+	}
+	client.RunCommand(ctx, cmd)
+	refresh = true
+
+	if *autohide {
+		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+			gtk.MainQuit()
+			return false
+		})
+	}
 }
 
 func handleKeyboard(window *gtk.Window, event *gdk.Event) {
