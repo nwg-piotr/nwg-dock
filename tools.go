@@ -163,7 +163,7 @@ func pinnedButton(ID string) *gtk.Button {
 				return true
 			} else if btnEvent.Button() == 3 {
 				contextMenu := pinnedMenuContext(ID)
-				contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+				contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
 				return true
 			}
 			return false
@@ -227,27 +227,22 @@ func taskButton(t task, instances []task) *gtk.Button {
 						return true
 					} else if btnEvent.Button() == 3 {
 						contextMenu := taskMenuContext(t.ID, instances)
-						contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+						contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
 						return true
 					}
 				}
 				return false
 			})
 		} else {
-			/*button.Connect("clicked", func() {
-				fmt.Println("clicked")
-				m1 = taskMenu(t.ID, instances)
-				m1.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
-			})*/
 			button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
 				btnEvent := gdk.EventButtonNewFromEvent(e)
 				if btnEvent.Button() == 1 {
 					menu := taskMenu(t.ID, instances)
-					menu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+					menu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
 					return true
 				} else if btnEvent.Button() == 3 {
 					contextMenu := taskMenuContext(t.ID, instances)
-					contextMenu.PopupAtWidget(button, gdk.GDK_GRAVITY_NORTH, gdk.GDK_GRAVITY_SOUTH, nil)
+					contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
 					fmt.Println("Pressed 3, t.conID =", t.conID)
 					return true
 				}
@@ -657,8 +652,6 @@ func savePinned() {
 		}
 
 	}
-
-	fmt.Println("pinned saved")
 }
 
 func launch(ID string) {

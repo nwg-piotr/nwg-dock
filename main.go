@@ -29,6 +29,7 @@ var (
 	src                                glib.SourceHandle
 	refresh                            bool // we will use this to trigger rebuilding mainBox
 	outerOrientation, innerOrientation gtk.Orientation
+	widgetAnchor, menuAnchor           gdk.Gravity
 )
 
 // Flags
@@ -50,7 +51,6 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	if err != nil {
 		pinned = nil
 	}
-	fmt.Println("pinned", pinned)
 
 	var alreadyAdded []string
 	for _, pin := range pinned {
@@ -185,8 +185,14 @@ func main() {
 	if *position == "bottom" || *position == "top" {
 		if *position == "bottom" {
 			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
+
+			widgetAnchor = gdk.GDK_GRAVITY_NORTH
+			menuAnchor = gdk.GDK_GRAVITY_SOUTH
 		} else {
 			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, true)
+
+			widgetAnchor = gdk.GDK_GRAVITY_SOUTH
+			menuAnchor = gdk.GDK_GRAVITY_NORTH
 		}
 
 		outerOrientation = gtk.ORIENTATION_VERTICAL
@@ -204,6 +210,9 @@ func main() {
 
 		outerOrientation = gtk.ORIENTATION_HORIZONTAL
 		innerOrientation = gtk.ORIENTATION_VERTICAL
+
+		widgetAnchor = gdk.GDK_GRAVITY_EAST
+		menuAnchor = gdk.GDK_GRAVITY_WEST
 	}
 
 	layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
@@ -239,7 +248,7 @@ func main() {
 	outerBox.PackStart(alignmentBox, true, true, 0)
 
 	mainBox, _ = gtk.BoxNew(innerOrientation, 0)
-	alignmentBox.PackStart(mainBox, true, false, 10)
+	alignmentBox.PackStart(mainBox, true, false, 0)
 
 	tasks, err := listTasks()
 	if err != nil {
