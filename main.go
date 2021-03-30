@@ -36,18 +36,26 @@ var (
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
 var displayVersion = flag.Bool("v", false, "display Version information")
 var autohide = flag.Bool("d", false, "auto-hiDe: close window when left or a button clicked")
-var full = flag.Bool("f", false, "Full width / height")
+var full = flag.Bool("f", false, "Full width/height")
 var numWS = flag.Int("w", 8, "number of Workspaces you use")
-var position = flag.String("p", "bottom", "Psosition: bottom, top or left")
+var position = flag.String("p", "bottom", "Position: bottom, top or left")
 var exclusive = flag.Bool("x", false, "set eXclusive zone")
 var imgSize = flag.Int("i", 48, "Icon size")
 var layer = flag.String("l", "top", "Layer top or bottom")
 var launcherCmd = flag.String("c", "nwggrid -p", "launcher Command")
+var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\"|\"center\"|\"end\"")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
 	mainBox, _ = gtk.BoxNew(innerOrientation, 0)
-	vbox.PackStart(mainBox, true, false, 0)
+
+	if *alignment == "start" {
+		vbox.PackStart(mainBox, false, true, 0)
+	} else if *alignment == "end" {
+		vbox.PackEnd(mainBox, false, true, 0)
+	} else {
+		vbox.PackStart(mainBox, true, false, 0)
+	}
 
 	var err error
 	pinned, err = loadTextFile(pinnedFile)
@@ -256,7 +264,8 @@ func main() {
 	outerBox.PackStart(alignmentBox, true, true, 0)
 
 	mainBox, _ = gtk.BoxNew(innerOrientation, 0)
-	alignmentBox.PackStart(mainBox, true, false, 0)
+	// We'll pack it later, in buildMainBox
+	// alignmentBox.PackStart(mainBox, true, false, 0)
 
 	tasks, err := listTasks()
 	if err != nil {
