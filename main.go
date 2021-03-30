@@ -40,7 +40,8 @@ var numWS = flag.Int("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: bottom, top or left")
 var exclusive = flag.Bool("x", false, "set eXclusive zone")
 var imgSize = flag.Int("i", 48, "Icon size")
-var launcherCmd = flag.String("l", "nwggrid -p", "Launcher command")
+var layer = flag.String("l", "top", "Layer top or bottom")
+var launcherCmd = flag.String("c", "nwggrid -p", "launcher Command")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -216,7 +217,12 @@ func main() {
 		menuAnchor = gdk.GDK_GRAVITY_WEST
 	}
 
-	layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
+	if *layer == "top" {
+		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
+	} else {
+		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
+	}
+
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, 0)
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_LEFT, 0)
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_RIGHT, 0)
