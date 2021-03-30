@@ -36,6 +36,7 @@ var (
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
 var displayVersion = flag.Bool("v", false, "display Version information")
 var autohide = flag.Bool("a", false, "Auto-hide: close window when left or a button clicked")
+var full = flag.Bool("f", false, "Full width / height")
 var numWS = flag.Int("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: bottom, top or left")
 var exclusive = flag.Bool("x", false, "set eXclusive zone")
@@ -200,15 +201,15 @@ func main() {
 		outerOrientation = gtk.ORIENTATION_VERTICAL
 		innerOrientation = gtk.ORIENTATION_HORIZONTAL
 
-		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, *exclusive)
-		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_RIGHT, *exclusive)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, *full)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_RIGHT, *full)
 	}
 
 	if *position == "left" {
 		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, true)
 
-		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, *exclusive)
-		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, *exclusive)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, *full)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, *full)
 
 		outerOrientation = gtk.ORIENTATION_HORIZONTAL
 		innerOrientation = gtk.ORIENTATION_VERTICAL
