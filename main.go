@@ -35,10 +35,10 @@ var (
 // Flags
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
 var displayVersion = flag.Bool("v", false, "display Version information")
-var autohide = flag.Bool("a", false, "Auto-hide: close window when left or a button clicked")
+var autohide = flag.Bool("d", false, "auto-hiDe: close window when left or a button clicked")
 var full = flag.Bool("f", false, "Full width / height")
 var numWS = flag.Int("w", 8, "number of Workspaces you use")
-var position = flag.String("p", "bottom", "Position: bottom, top or left")
+var position = flag.String("p", "bottom", "Psosition: bottom, top or left")
 var exclusive = flag.Bool("x", false, "set eXclusive zone")
 var imgSize = flag.Int("i", 48, "Icon size")
 var layer = flag.String("l", "top", "Layer top or bottom")
