@@ -145,7 +145,7 @@ func workspaceNum(workspaces []sway.Workspace, name string) int64 {
 
 func pinnedButton(ID string) *gtk.Button {
 	button, _ := gtk.ButtonNew()
-	image, err := createImage(ID, imgSizeDock)
+	image, err := createImage(ID, *imgSize)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
@@ -204,7 +204,7 @@ func cancelClose() {
 
 func taskButton(t task, instances []task) *gtk.Button {
 	button, _ := gtk.ButtonNew()
-	image, err := createImage(t.ID, imgSizeDock)
+	image, err := createImage(t.ID, *imgSize)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
@@ -380,7 +380,6 @@ func createImage(appID string, size int) (*gtk.Image, error) {
 	if err != nil {
 		name = appID
 	}
-	fmt.Println("appID", appID, "name = ", name)
 	pixbuf, err := createPixbuf(name, size)
 	if err != nil {
 		return nil, err

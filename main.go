@@ -20,27 +20,30 @@ import (
 const version = "0.0.1"
 
 var (
-	appDirs         []string
-	configDirectory string
-	pinnedFile      string
-	pinned          []string
-	oldTasks        []task
-	mainBox         *gtk.Box
-	imgSizeDock     = 52
-	src             glib.SourceHandle
-	refresh         bool // we will use this to trigger rebuilding mainBox
+	appDirs                            []string
+	configDirectory                    string
+	pinnedFile                         string
+	pinned                             []string
+	oldTasks                           []task
+	mainBox                            *gtk.Box
+	src                                glib.SourceHandle
+	refresh                            bool // we will use this to trigger rebuilding mainBox
+	outerOrientation, innerOrientation gtk.Orientation
 )
 
 // Flags
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
 var displayVersion = flag.Bool("v", false, "display Version information")
-var autohide = flag.Bool("a", false, "Auto-hide: close window when left or button clicked")
+var autohide = flag.Bool("a", false, "Auto-hide: close window when left or a button clicked")
 var numWS = flag.Int("w", 8, "number of Workspaces you use")
+var position = flag.String("p", "bottom", "Position: bottom, top or left")
+var exclusive = flag.Bool("x", false, "set eXclusive zone")
+var imgSize = flag.Int("i", 48, "Icon size")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
-	mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
-	vbox.PackStart(mainBox, false, false, 0)
+	mainBox, _ = gtk.BoxNew(innerOrientation, 0)
+	vbox.PackStart(mainBox, true, false, 0)
 
 	var err error
 	pinned, err = loadTextFile(pinnedFile)
@@ -91,7 +94,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	button, _ := gtk.ButtonNew()
-	image, err := createImage("nwggrid", imgSizeDock)
+	image, err := createImage("nwggrid", *imgSize)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
@@ -111,7 +114,7 @@ func main() {
 	flag.Parse()
 
 	if *displayVersion {
-		fmt.Printf("nwgocc version %s\n", version)
+		fmt.Printf("nwg-dock version %s\n", version)
 		os.Exit(0)
 	}
 
@@ -128,8 +131,7 @@ func main() {
 		}
 	}()
 
-	// We don't want multiple instances. For better user experience (when nwgocc attached to a button or a key binding),
-	// let's kill the running instance and exit.
+	// We don't want multiple instances. Kill the running instance and exit.
 	lockFilePath := fmt.Sprintf("%s/nwg-dock.lock", tempDir())
 	lockFile, err := singleinstance.CreateLockFile(lockFilePath)
 	if err != nil {
@@ -176,12 +178,33 @@ func main() {
 	}
 	layershell.InitForWindow(win)
 
-	// TODO: Future positioning: when the window takes all the width/height, we'll turn this on.
-	// layershell.AutoExclusiveZoneEnable(win)
+	if *exclusive {
+		layershell.AutoExclusiveZoneEnable(win)
+	}
 
-	layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, false)
-	layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
-	layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_RIGHT, false)
+	if *position == "bottom" || *position == "top" {
+		if *position == "bottom" {
+			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
+		} else {
+			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, true)
+		}
+
+		outerOrientation = gtk.ORIENTATION_VERTICAL
+		innerOrientation = gtk.ORIENTATION_HORIZONTAL
+
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, *exclusive)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_RIGHT, *exclusive)
+	}
+
+	if *position == "left" {
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, true)
+
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, *exclusive)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, *exclusive)
+
+		outerOrientation = gtk.ORIENTATION_HORIZONTAL
+		innerOrientation = gtk.ORIENTATION_VERTICAL
+	}
 
 	layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, 0)
@@ -208,11 +231,15 @@ func main() {
 		cancelClose()
 	})
 
-	vbox, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
-	win.Add(vbox)
+	outerBox, _ := gtk.BoxNew(outerOrientation, 0)
+	outerBox.SetProperty("name", "box")
+	win.Add(outerBox)
 
-	mainBox, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
-	vbox.PackStart(mainBox, true, true, 0)
+	alignmentBox, _ := gtk.BoxNew(innerOrientation, 0)
+	outerBox.PackStart(alignmentBox, true, true, 0)
+
+	mainBox, _ = gtk.BoxNew(innerOrientation, 0)
+	alignmentBox.PackStart(mainBox, true, false, 10)
 
 	tasks, err := listTasks()
 	if err != nil {
@@ -220,13 +247,13 @@ func main() {
 	}
 	oldTasks = tasks
 
-	buildMainBox(tasks, vbox)
+	buildMainBox(tasks, alignmentBox)
 
 	glib.TimeoutAdd(uint(150), func() bool {
 		currentTasks, _ := listTasks()
 		if len(currentTasks) != len(oldTasks) || refresh {
 			fmt.Println("refreshing...")
-			buildMainBox(currentTasks, vbox)
+			buildMainBox(currentTasks, outerBox)
 			oldTasks = currentTasks
 			refresh = false
 		}
