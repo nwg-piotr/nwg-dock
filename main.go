@@ -40,6 +40,7 @@ var numWS = flag.Int("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: bottom, top or left")
 var exclusive = flag.Bool("x", false, "set eXclusive zone")
 var imgSize = flag.Int("i", 48, "Icon size")
+var launcherCmd = flag.String("l", "nwggrid -p", "Launcher command")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -102,7 +103,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		button.SetLabel("")
 
 		button.Connect("clicked", func() {
-			launch("nwggrid -p")
+			launch(*launcherCmd)
 		})
 		button.Connect("enter-notify-event", cancelClose)
 	}
@@ -215,7 +216,7 @@ func main() {
 		menuAnchor = gdk.GDK_GRAVITY_WEST
 	}
 
-	layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
+	layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, 0)
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_LEFT, 0)
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_RIGHT, 0)
@@ -262,7 +263,7 @@ func main() {
 		currentTasks, _ := listTasks()
 		if len(currentTasks) != len(oldTasks) || refresh {
 			fmt.Println("refreshing...")
-			buildMainBox(currentTasks, outerBox)
+			buildMainBox(currentTasks, alignmentBox)
 			oldTasks = currentTasks
 			refresh = false
 		}
