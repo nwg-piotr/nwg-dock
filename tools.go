@@ -146,36 +146,42 @@ func pinnedButton(ID string) *gtk.Box {
 	box, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	button, _ := gtk.ButtonNew()
 	box.PackStart(button, false, false, 0)
+
 	image, err := createImage(ID, *imgSize)
-	if err == nil {
-		button.SetImage(image)
-		button.SetImagePosition(gtk.POS_TOP)
-		button.SetAlwaysShowImage(true)
-		button.SetTooltipText(getName(ID))
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", *imgSize, *imgSize/8)
-		img, _ := gtk.ImageNewFromPixbuf(pixbuf)
-		box.PackStart(img, false, false, 0)
-
-		button.Connect("clicked", func() {
-			launch(ID)
-		})
-
-		button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
-			btnEvent := gdk.EventButtonNewFromEvent(e)
-			if btnEvent.Button() == 1 {
-				launch(ID)
-				return true
-			} else if btnEvent.Button() == 3 {
-				contextMenu := pinnedMenuContext(ID)
-				contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
-				return true
-			}
-			return false
-		})
-
-	} else {
-		button.SetLabel(ID)
+	if err != nil {
+		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", *imgSize, *imgSize)
+		if err == nil {
+			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
+		} else {
+			image, _ = gtk.ImageNew()
+		}
 	}
+
+	button.SetImage(image)
+	button.SetImagePosition(gtk.POS_TOP)
+	button.SetAlwaysShowImage(true)
+	button.SetTooltipText(getName(ID))
+	pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", *imgSize, *imgSize/8)
+	img, _ := gtk.ImageNewFromPixbuf(pixbuf)
+	box.PackStart(img, false, false, 0)
+
+	button.Connect("clicked", func() {
+		launch(ID)
+	})
+
+	button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
+		btnEvent := gdk.EventButtonNewFromEvent(e)
+		if btnEvent.Button() == 1 {
+			launch(ID)
+			return true
+		} else if btnEvent.Button() == 3 {
+			contextMenu := pinnedMenuContext(ID)
+			contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
+			return true
+		}
+		return false
+	})
+
 	button.Connect("enter-notify-event", cancelClose)
 	return box
 }
@@ -210,63 +216,69 @@ func taskButton(t task, instances []task) *gtk.Box {
 	box, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	button, _ := gtk.ButtonNew()
 	box.PackStart(button, false, false, 0)
+
 	image, err := createImage(t.ID, *imgSize)
-	if err == nil {
-		button.SetImage(image)
-		button.SetImagePosition(gtk.POS_TOP)
-		button.SetAlwaysShowImage(true)
-		button.SetTooltipText(getName(t.ID))
-		var img *gtk.Image
-		if len(instances) < 2 {
-			pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", *imgSize, *imgSize/8)
-			img, _ = gtk.ImageNewFromPixbuf(pixbuf)
+	if err != nil {
+		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", *imgSize, *imgSize)
+		if err == nil {
+			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
-			pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-multiple.svg", *imgSize, *imgSize/8)
-			img, _ = gtk.ImageNewFromPixbuf(pixbuf)
+			image, _ = gtk.ImageNew()
 		}
-		box.PackStart(img, false, false, 0)
+	}
 
-		button.Connect("enter-notify-event", cancelClose)
+	button.SetImage(image)
+	button.SetImagePosition(gtk.POS_TOP)
+	button.SetAlwaysShowImage(true)
+	button.SetTooltipText(getName(t.ID))
+	var img *gtk.Image
+	if len(instances) < 2 {
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", *imgSize, *imgSize/8)
+		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
+	} else {
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-multiple.svg", *imgSize, *imgSize/8)
+		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
+	}
+	box.PackStart(img, false, false, 0)
 
-		if len(instances) == 1 {
-			button.Connect("event", func(btn *gtk.Button, e *gdk.Event) bool {
-				btnEvent := gdk.EventButtonNewFromEvent(e)
-				/* EVENT_BUTTON_PRESS would be more obvious, but it causes the misbehaviour:
-				   if con is located on an external display, after pressing the button, the conID value
-				   "freezes", and stays the same for all taskButtons, until the right mouse click.
-				   A gotk3 bug or WTF? */
-				if btnEvent.Type() == gdk.EVENT_BUTTON_RELEASE {
-					if btnEvent.Button() == 1 {
-						focusCon(t.conID)
-						return true
-					} else if btnEvent.Button() == 3 {
-						contextMenu := taskMenuContext(t.ID, instances)
-						contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
-						return true
-					}
-				}
-				return false
-			})
-		} else {
-			button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
-				btnEvent := gdk.EventButtonNewFromEvent(e)
+	button.Connect("enter-notify-event", cancelClose)
+
+	if len(instances) == 1 {
+		button.Connect("event", func(btn *gtk.Button, e *gdk.Event) bool {
+			btnEvent := gdk.EventButtonNewFromEvent(e)
+			/* EVENT_BUTTON_PRESS would be more obvious, but it causes the misbehaviour:
+			   if con is located on an external display, after pressing the button, the conID value
+			   "freezes", and stays the same for all taskButtons, until the right mouse click.
+			   A gotk3 bug or WTF? */
+			if btnEvent.Type() == gdk.EVENT_BUTTON_RELEASE {
 				if btnEvent.Button() == 1 {
-					menu := taskMenu(t.ID, instances)
-					menu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
+					focusCon(t.conID)
 					return true
 				} else if btnEvent.Button() == 3 {
 					contextMenu := taskMenuContext(t.ID, instances)
 					contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
-					fmt.Println("Pressed 3, t.conID =", t.conID)
 					return true
 				}
-				return false
-			})
-		}
-
+			}
+			return false
+		})
 	} else {
-		button.SetLabel(t.ID)
+		button.Connect("button-release-event", func(btn *gtk.Button, e *gdk.Event) bool {
+			btnEvent := gdk.EventButtonNewFromEvent(e)
+			if btnEvent.Button() == 1 {
+				menu := taskMenu(t.ID, instances)
+				menu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
+				return true
+			} else if btnEvent.Button() == 3 {
+				contextMenu := taskMenuContext(t.ID, instances)
+				contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
+				fmt.Println("Pressed 3, t.conID =", t.conID)
+				return true
+			}
+			return false
+		})
 	}
+
 	return box
 }
 
@@ -522,40 +534,47 @@ func isIn(slice []string, val string) bool {
 	return false
 }
 
-var exceptions = map[string]string{
-	"gimp":  "gimp",
-	"pamac": "system-software-install",
-}
-
 func getIcon(appName string) (string, error) {
-	// Exceptions for apps which app_idd varies from their .desktop file name
-	for key, value := range exceptions {
-		if strings.HasPrefix(appName, key) {
-			return value, nil
-		}
-	}
-
+	p := ""
 	for _, d := range appDirs {
 		path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
-		p := ""
 		if pathExists(path) {
 			p = path
 		} else if pathExists(strings.ToLower(path)) {
 			p = strings.ToLower(path)
 		}
-		if p != "" {
-			lines, err := loadTextFile(p)
-			if err != nil {
-				return "", err
-			}
-			for _, line := range lines {
-				if strings.HasPrefix(strings.ToUpper(line), "ICON") {
-					return strings.Split(line, "=")[1], nil
-				}
+	}
+	/* Some apps' app_id varies from their .desktop file name, e.g. 'gimp-2.9.9' or 'pamac-manager'.
+	   Let's try to find a matching .desktop file name */
+	if !strings.HasPrefix(appName, "/") && p == "" { // skip icon paths given instead of names
+		p = searchDesktopDirs(appName)
+	}
+
+	if p != "" {
+		lines, err := loadTextFile(p)
+		if err != nil {
+			return "", err
+		}
+		for _, line := range lines {
+			if strings.HasPrefix(strings.ToUpper(line), "ICON") {
+				return strings.Split(line, "=")[1], nil
 			}
 		}
 	}
 	return "", errors.New("Couldn't find the icon")
+}
+
+func searchDesktopDirs(badAppID string) string {
+	b4Hyphen := strings.Split(badAppID, "-")[0]
+	for _, d := range appDirs {
+		items, _ := ioutil.ReadDir(d)
+		for _, item := range items {
+			if strings.Contains(item.Name(), b4Hyphen) {
+				return filepath.Join(d, item.Name())
+			}
+		}
+	}
+	return ""
 }
 
 func getExec(appName string) (string, error) {
@@ -574,6 +593,11 @@ func getExec(appName string) (string, error) {
 					break
 				}
 			}
+		}
+
+		// as above in getIcon - for tasks w/ improper app_id
+		if path == "" {
+			path = searchDesktopDirs(appName)
 		}
 
 		if path != "" {
