@@ -88,7 +88,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	alreadyAdded = nil
 	for _, task := range tasks {
-		// nwggrid is a companion app w/ the special button
+		// nwggrid is the default launcher, we don't want to see it as a task
 		if !inPinned(task.ID) && task.ID != "nwggrid" {
 			instances := taskInstances(task.ID, tasks)
 			if len(instances) == 1 {
@@ -204,9 +204,6 @@ func main() {
 		layershell.AutoExclusiveZoneEnable(win)
 	}
 
-	/*if *output != "" {
-		layershell.SetMonitor(window, monitor)
-	}*/
 	if *position == "bottom" || *position == "top" {
 		if *position == "bottom" {
 			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
@@ -256,7 +253,6 @@ func main() {
 	})
 
 	// Close the window on leave, but not immediately, to avoid accidental closes
-
 	win.Connect("leave-notify-event", func() {
 		if *autohide {
 			src, err = glib.TimeoutAdd(uint(1000), func() bool {
@@ -278,8 +274,7 @@ func main() {
 	outerBox.PackStart(alignmentBox, true, true, 0)
 
 	mainBox, _ = gtk.BoxNew(innerOrientation, 0)
-	// We'll pack it later, in buildMainBox
-	// alignmentBox.PackStart(mainBox, true, false, 0)
+	// We'll pack mainBox later, in buildMainBox
 
 	tasks, err := listTasks()
 	if err != nil {
