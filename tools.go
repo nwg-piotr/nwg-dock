@@ -566,10 +566,9 @@ func getExec(appName string) (string, error) {
 		path := ""
 		for _, f := range files {
 			if strings.HasSuffix(f.Name(), ".desktop") &&
-				strings.Contains(strings.ToUpper(f.Name()), strings.ToUpper(appName)) {
-
+				strings.Contains(f.Name(), appName) {
 				path = filepath.Join(d, f.Name())
-				fmt.Println(path)
+				//fmt.Println(".desktop file: ", path)
 			}
 		}
 		if path != "" {
@@ -584,7 +583,8 @@ func getExec(appName string) (string, error) {
 					if cutAt != -1 {
 						l = l[:cutAt-1]
 					}
-					return l, nil
+					appName = l
+					break
 				}
 			}
 		}
@@ -672,10 +672,22 @@ func launch(ID string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(e)
+
 	elements := strings.Split(e, " ")
-	fmt.Println(elements)
-	cmd := exec.Command(elements[0], elements[1:]...)
+
+	// find prepended env variables, if any
+	envVarsNum := strings.Count(e, "=")
+
+	cmd := exec.Command(elements[envVarsNum], elements[1+envVarsNum:]...)
+
+	if envVarsNum > 0 {
+		cmd.Env = os.Environ()
+		for i := 0; i < envVarsNum; i++ {
+			cmd.Env = append(cmd.Env, elements[i])
+		}
+	}
+
+	fmt.Println("cmd = ", cmd)
 
 	go cmd.Run()
 

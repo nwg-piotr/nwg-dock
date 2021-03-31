@@ -45,6 +45,10 @@ var imgSize = flag.Int("i", 48, "Icon size")
 var layer = flag.String("l", "top", "Layer \"top\" or \"bottom\"")
 var launcherCmd = flag.String("c", "nwggrid -p", "Command assigned to the launcher button")
 var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\", \"center\" or \"end\"")
+var marginTop = flag.Int("mt", 0, "Margin Top")
+var marginLeft = flag.Int("ml", 0, "Margin Left")
+var marginRight = flag.Int("mr", 0, "Margin Right")
+var marginBottom = flag.Int("mb", 0, "Margin Bottom")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -243,10 +247,10 @@ func main() {
 		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
 	}
 
-	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, 0)
-	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_LEFT, 0)
-	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_RIGHT, 0)
-	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_BOTTOM, 0)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, *marginTop)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_LEFT, *marginLeft)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_RIGHT, *marginRight)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_BOTTOM, *marginBottom)
 
 	win.Connect("destroy", func() {
 		gtk.MainQuit()
