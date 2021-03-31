@@ -151,7 +151,7 @@ func pinnedButton(ID string) *gtk.Box {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
 		button.SetAlwaysShowImage(true)
-		//button.SetLabel("")
+		button.SetTooltipText(getName(ID))
 		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", *imgSize, *imgSize/8)
 		img, _ := gtk.ImageNewFromPixbuf(pixbuf)
 		box.PackStart(img, false, false, 0)
@@ -215,6 +215,7 @@ func taskButton(t task, instances []task) *gtk.Box {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
 		button.SetAlwaysShowImage(true)
+		button.SetTooltipText(getName(t.ID))
 		var img *gtk.Image
 		if len(instances) < 2 {
 			pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", *imgSize, *imgSize/8)
@@ -350,12 +351,12 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 		pinItem.SetLabel("Pin")
 		pinItem.Connect("activate", func() {
 			fmt.Println("pin", taskID)
-			fmt.Println("unpin", taskID)
 			pinTask(taskID)
 		})
 	} else {
 		pinItem.SetLabel("Unpin")
 		pinItem.Connect("activate", func() {
+			fmt.Println("unpin", taskID)
 			unpinTask(taskID)
 		})
 	}
@@ -558,19 +559,23 @@ func getIcon(appName string) (string, error) {
 }
 
 func getExec(appName string) (string, error) {
+	cmd := appName
 	if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
-		appName = "gimp"
+		cmd = "gimp"
 	}
 	for _, d := range appDirs {
 		files, _ := ioutil.ReadDir(d)
 		path := ""
 		for _, f := range files {
-			if strings.HasSuffix(f.Name(), ".desktop") &&
-				strings.Contains(f.Name(), appName) {
-				path = filepath.Join(d, f.Name())
-				//fmt.Println(".desktop file: ", path)
+			if strings.HasSuffix(f.Name(), ".desktop") {
+				if f.Name() == fmt.Sprintf("%s.desktop", appName) ||
+					f.Name() == fmt.Sprintf("%s.desktop", strings.ToLower(appName)) {
+					path = filepath.Join(d, f.Name())
+					break
+				}
 			}
 		}
+
 		if path != "" {
 			lines, err := loadTextFile(path)
 			if err != nil {
@@ -583,13 +588,44 @@ func getExec(appName string) (string, error) {
 					if cutAt != -1 {
 						l = l[:cutAt-1]
 					}
-					appName = l
+					cmd = l
 					break
 				}
 			}
 		}
 	}
-	return appName, nil
+	return cmd, nil
+}
+
+func getName(appName string) string {
+	name := appName
+	for _, d := range appDirs {
+		files, _ := ioutil.ReadDir(d)
+		path := ""
+		for _, f := range files {
+			if strings.HasSuffix(f.Name(), ".desktop") {
+				if f.Name() == fmt.Sprintf("%s.desktop", appName) ||
+					f.Name() == fmt.Sprintf("%s.desktop", strings.ToLower(appName)) {
+					path = filepath.Join(d, f.Name())
+					break
+				}
+			}
+		}
+
+		if path != "" {
+			lines, err := loadTextFile(path)
+			if err != nil {
+				return name
+			}
+			for _, line := range lines {
+				if strings.HasPrefix(strings.ToUpper(line), "NAME") {
+					name = line[5:]
+					break
+				}
+			}
+		}
+	}
+	return name
 }
 
 func pathExists(name string) bool {
@@ -631,9 +667,7 @@ func pinTask(itemID string) {
 }
 
 func unpinTask(itemID string) {
-	fmt.Println(pinned)
 	pinned = remove(pinned, itemID)
-	fmt.Println(pinned)
 	savePinned()
 	refresh = true
 }
@@ -686,8 +720,6 @@ func launch(ID string) {
 			cmd.Env = append(cmd.Env, elements[i])
 		}
 	}
-
-	fmt.Println("cmd = ", cmd)
 
 	go cmd.Run()
 
