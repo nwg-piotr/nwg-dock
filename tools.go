@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -143,14 +142,19 @@ func workspaceNum(workspaces []sway.Workspace, name string) int64 {
 	return 0
 }
 
-func pinnedButton(ID string) *gtk.Button {
+func pinnedButton(ID string) *gtk.Box {
+	box, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	button, _ := gtk.ButtonNew()
+	box.PackStart(button, false, false, 0)
 	image, err := createImage(ID, *imgSize)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
 		button.SetAlwaysShowImage(true)
-		button.SetLabel("")
+		//button.SetLabel("")
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", *imgSize, *imgSize/8)
+		img, _ := gtk.ImageNewFromPixbuf(pixbuf)
+		box.PackStart(img, false, false, 0)
 
 		button.Connect("clicked", func() {
 			launch(ID)
@@ -173,7 +177,7 @@ func pinnedButton(ID string) *gtk.Button {
 		button.SetLabel(ID)
 	}
 	button.Connect("enter-notify-event", cancelClose)
-	return button
+	return box
 }
 
 func pinnedMenuContext(taskID string) gtk.Menu {
@@ -202,15 +206,24 @@ func cancelClose() {
 	}
 }
 
-func taskButton(t task, instances []task) *gtk.Button {
+func taskButton(t task, instances []task) *gtk.Box {
+	box, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	button, _ := gtk.ButtonNew()
+	box.PackStart(button, false, false, 0)
 	image, err := createImage(t.ID, *imgSize)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
 		button.SetAlwaysShowImage(true)
-		// TODO: instead of the label, we'll need some graphics later
-		button.SetLabel(strconv.Itoa(len(instances)))
+		var img *gtk.Image
+		if len(instances) < 2 {
+			pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", *imgSize, *imgSize/8)
+			img, _ = gtk.ImageNewFromPixbuf(pixbuf)
+		} else {
+			pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-multiple.svg", *imgSize, *imgSize/8)
+			img, _ = gtk.ImageNewFromPixbuf(pixbuf)
+		}
+		box.PackStart(img, false, false, 0)
 
 		button.Connect("enter-notify-event", cancelClose)
 
@@ -253,7 +266,7 @@ func taskButton(t task, instances []task) *gtk.Button {
 	} else {
 		button.SetLabel(t.ID)
 	}
-	return button
+	return box
 }
 
 func taskMenu(taskID string, instances []task) gtk.Menu {

@@ -10,10 +10,12 @@ build:
 	go build -o bin/nwg-dock *.go
 
 install:
+	mkdir -p /usr/share/nwg-dock
+	cp images/* /usr/share/nwg-dock
 	cp bin/nwg-dock /usr/bin
-	cp stuff/nwggrid.svg /usr/share/pixmaps
 
 uninstall:
+	rm -r /usr/share/nwg-dock
 	rm /usr/bin/nwg-dock
 
 run:

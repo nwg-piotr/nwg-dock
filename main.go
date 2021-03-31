@@ -106,12 +106,12 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	button, _ := gtk.ButtonNew()
-	image, err := createImage("nwggrid", *imgSize)
+	image, err := createImage("/usr/share/nwg-dock/grid.svg", *imgSize)
 	if err == nil {
 		button.SetImage(image)
 		button.SetImagePosition(gtk.POS_TOP)
 		button.SetAlwaysShowImage(true)
-		button.SetLabel("")
+		//button.SetLabel("")
 
 		button.Connect("clicked", func() {
 			launch(*launcherCmd)
