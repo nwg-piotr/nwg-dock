@@ -732,9 +732,38 @@ func con2WS(conID int64, wsNum int) {
 	}
 }
 
-func handleKeyboard(window *gtk.Window, event *gdk.Event) {
-	key := &gdk.EventKey{Event: event}
-	if key.KeyVal() == gdk.KEY_Escape {
-		gtk.MainQuit()
+// Returns map output name -> gdk.Monitor
+func mapOutputs() (map[string]*gdk.Monitor, error) {
+	result := make(map[string]*gdk.Monitor)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	client, err := sway.New(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	outputs, err := client.GetOutputs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	display, err := gdk.DisplayGetDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	num := display.GetNMonitors()
+	for i := 0; i < num; i++ {
+		monitor, _ := display.GetMonitor(i)
+		geometry := monitor.GetGeometry()
+
+		for _, output := range outputs {
+			if int(output.Rect.X) == geometry.GetX() && int(output.Rect.Y) == geometry.GetY() {
+				result[output.Name] = monitor
+			}
+		}
+	}
+	return result, nil
 }

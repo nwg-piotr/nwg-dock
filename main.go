@@ -34,16 +34,17 @@ var (
 
 // Flags
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
+var targetOutput = flag.String("o", "", "name of Output to display the dock on")
 var displayVersion = flag.Bool("v", false, "display Version information")
 var autohide = flag.Bool("d", false, "auto-hiDe: close window when left or a button clicked")
-var full = flag.Bool("f", false, "Full width/height")
+var full = flag.Bool("f", false, "take Full screen width/height")
 var numWS = flag.Int("w", 8, "number of Workspaces you use")
-var position = flag.String("p", "bottom", "Position: bottom, top or left")
-var exclusive = flag.Bool("x", false, "set eXclusive zone")
+var position = flag.String("p", "bottom", "Position: \"bottom\", \"top\" or \"left\"")
+var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside")
 var imgSize = flag.Int("i", 48, "Icon size")
-var layer = flag.String("l", "top", "Layer top or bottom")
-var launcherCmd = flag.String("c", "nwggrid -p", "launcher Command")
-var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\"|\"center\"|\"end\"")
+var layer = flag.String("l", "top", "Layer \"top\" or \"bottom\"")
+var launcherCmd = flag.String("c", "nwggrid -p", "Command assigned to the launcher button")
+var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\", \"center\" or \"end\"")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -189,10 +190,23 @@ func main() {
 	}
 	layershell.InitForWindow(win)
 
+	if *targetOutput != "" {
+		// We need to assign layershell to a monitor, but we only know the output name!
+		name2mon, err := mapOutputs()
+		if err == nil {
+			layershell.SetMonitor(win, name2mon[*targetOutput])
+		} else {
+			fmt.Println(err)
+		}
+	}
+
 	if *exclusive {
 		layershell.AutoExclusiveZoneEnable(win)
 	}
 
+	/*if *output != "" {
+		layershell.SetMonitor(window, monitor)
+	}*/
 	if *position == "bottom" || *position == "top" {
 		if *position == "bottom" {
 			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
