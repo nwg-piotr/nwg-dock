@@ -11,7 +11,7 @@ build:
 
 install:
 	mkdir -p /usr/share/nwg-dock
-	cp images/* /usr/share/nwg-dock
+	cp -r images /usr/share/nwg-dock
 	cp bin/nwg-dock /usr/bin
 
 uninstall:

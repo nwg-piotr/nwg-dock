@@ -157,7 +157,7 @@ func pinnedButton(ID string) *gtk.Box {
 
 	image, err := createImage(ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", imgSizeScaled, imgSizeScaled)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/icon-missing.svg", imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -169,7 +169,7 @@ func pinnedButton(ID string) *gtk.Box {
 	button.SetImagePosition(gtk.POS_TOP)
 	button.SetAlwaysShowImage(true)
 	button.SetTooltipText(getName(ID))
-	pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", imgSizeScaled, imgSizeScaled/8)
+	pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/task-empty.svg", imgSizeScaled, imgSizeScaled/8)
 	img, _ := gtk.ImageNewFromPixbuf(pixbuf)
 	box.PackStart(img, false, false, 0)
 
@@ -227,7 +227,7 @@ func taskButton(t task, instances []task) *gtk.Box {
 
 	image, err := createImage(t.ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", imgSizeScaled, imgSizeScaled)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/icon-missing.svg", imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -241,10 +241,10 @@ func taskButton(t task, instances []task) *gtk.Box {
 	button.SetTooltipText(getName(t.ID))
 	var img *gtk.Image
 	if len(instances) < 2 {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", imgSizeScaled, imgSizeScaled/8)
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/task-single.svg", imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	} else {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-multiple.svg", imgSizeScaled, imgSizeScaled/8)
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/task-multiple.svg", imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	}
 	box.PackStart(img, false, false, 0)
@@ -346,7 +346,7 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 		subitem.Connect("activate", func() {
 			killCon(conID)
 		})
-		for i := 1; i < *numWS+1; i++ {
+		for i := 1; i < int(*numWS)+1; i++ {
 			subitem, _ := gtk.MenuItemNewWithLabel(fmt.Sprintf("To WS %v", i))
 			target := i
 			subitem.Connect("activate", func() {
@@ -783,7 +783,6 @@ func focusCon(conID int64) {
 }
 
 func focusWorkspace(num int64) {
-	fmt.Println("focus", num)
 	cmd := fmt.Sprintf("workspace number %v", num)
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()

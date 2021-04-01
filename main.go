@@ -41,7 +41,7 @@ var targetOutput = flag.String("o", "", "name of Output to display the dock on")
 var displayVersion = flag.Bool("v", false, "display Version information")
 var autohide = flag.Bool("d", false, "auto-hiDe: close window when left or a button clicked")
 var full = flag.Bool("f", false, "take Full screen width/height")
-var numWS = flag.Int("w", 8, "number of Workspaces you use")
+var numWS = flag.Int64("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: \"bottom\", \"top\" or \"left\"")
 var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside")
 var imgSize = flag.Int("i", 48, "Icon size")
@@ -133,9 +133,9 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	wsButton, _ := gtk.ButtonNew()
-	image, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/%v.svg", currentWsNum), imgSizeScaled)
+	wsImage, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum), imgSizeScaled)
 	if err == nil {
-		wsButton.SetImage(image)
+		wsButton.SetImage(wsImage)
 		wsButton.SetAlwaysShowImage(true)
 		wsButton.AddEvents(int(gdk.SCROLL_MASK))
 
@@ -148,10 +148,26 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		wsButton.Connect("scroll-event", func(btn *gtk.Button, e *gdk.Event) bool {
 			event := gdk.EventScrollNewFromEvent(e)
 			if event.Direction() == gdk.SCROLL_UP {
-				fmt.Println("scroll up")
+				if targetWsNum < *numWS && targetWsNum < 20 {
+					targetWsNum++
+				} else {
+					targetWsNum = 1
+				}
+				pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
+					targetWsNum), imgSizeScaled, imgSizeScaled)
+				wsImage.SetFromPixbuf(pixbuf)
+
 				return true
 			} else if event.Direction() == gdk.SCROLL_DOWN {
-				fmt.Println("scroll down")
+				if targetWsNum > 1 {
+					targetWsNum--
+				} else {
+					targetWsNum = *numWS
+				}
+				pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
+					targetWsNum), imgSizeScaled, imgSizeScaled)
+				wsImage.SetFromPixbuf(pixbuf)
+
 				return true
 			}
 			return false
@@ -160,7 +176,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.PackStart(wsButton, false, false, 0)
 
 	button, _ := gtk.ButtonNew()
-	image, err = createImage("/usr/share/nwg-dock/grid.svg", imgSizeScaled)
+	image, err := createImage("/usr/share/nwg-dock/images/grid.svg", imgSizeScaled)
 	if err == nil {
 		button.SetImage(image)
 		button.SetAlwaysShowImage(true)
@@ -343,7 +359,6 @@ func main() {
 		currentTasks, _ := listTasks()
 		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
 			fmt.Println("refreshing...")
-			fmt.Println(currentWsNum)
 			buildMainBox(currentTasks, alignmentBox)
 			oldTasks = currentTasks
 			oldWsNum = currentWsNum
