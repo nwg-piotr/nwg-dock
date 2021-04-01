@@ -147,9 +147,9 @@ func pinnedButton(ID string) *gtk.Box {
 	button, _ := gtk.ButtonNew()
 	box.PackStart(button, false, false, 0)
 
-	image, err := createImage(ID, *imgSize)
+	image, err := createImage(ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", *imgSize, *imgSize)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -161,7 +161,7 @@ func pinnedButton(ID string) *gtk.Box {
 	button.SetImagePosition(gtk.POS_TOP)
 	button.SetAlwaysShowImage(true)
 	button.SetTooltipText(getName(ID))
-	pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", *imgSize, *imgSize/8)
+	pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-empty.svg", imgSizeScaled, imgSizeScaled/8)
 	img, _ := gtk.ImageNewFromPixbuf(pixbuf)
 	box.PackStart(img, false, false, 0)
 
@@ -217,9 +217,9 @@ func taskButton(t task, instances []task) *gtk.Box {
 	button, _ := gtk.ButtonNew()
 	box.PackStart(button, false, false, 0)
 
-	image, err := createImage(t.ID, *imgSize)
+	image, err := createImage(t.ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", *imgSize, *imgSize)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/icon-missing.svg", imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -233,10 +233,10 @@ func taskButton(t task, instances []task) *gtk.Box {
 	button.SetTooltipText(getName(t.ID))
 	var img *gtk.Image
 	if len(instances) < 2 {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", *imgSize, *imgSize/8)
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-single.svg", imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	} else {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-multiple.svg", *imgSize, *imgSize/8)
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/task-multiple.svg", imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	}
 	box.PackStart(img, false, false, 0)

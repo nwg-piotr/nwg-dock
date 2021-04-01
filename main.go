@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/allan-simon/go-singleinstance"
@@ -30,6 +31,7 @@ var (
 	refresh                            bool // we will use this to trigger rebuilding mainBox
 	outerOrientation, innerOrientation gtk.Orientation
 	widgetAnchor, menuAnchor           gdk.Gravity
+	imgSizeScaled                      int
 )
 
 // Flags
@@ -66,6 +68,26 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	pinned, err = loadTextFile(pinnedFile)
 	if err != nil {
 		pinned = nil
+	}
+
+	var allItems []string
+	for _, cntPin := range pinned {
+		if !isIn(allItems, cntPin) {
+			allItems = append(allItems, cntPin)
+		}
+	}
+	for _, cntTask := range tasks {
+		if !isIn(allItems, cntTask.ID) && !strings.Contains(*launcherCmd, cntTask.ID) {
+			allItems = append(allItems, cntTask.ID)
+		}
+	}
+
+	// scale icons down when their number increases
+	if *imgSize*6/(len(allItems)) < *imgSize {
+		overflow := (len(allItems) - 8) / 3
+		imgSizeScaled = *imgSize * 6 / (6 + overflow)
+	} else {
+		imgSizeScaled = *imgSize
 	}
 
 	var alreadyAdded []string
@@ -110,12 +132,10 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	button, _ := gtk.ButtonNew()
-	image, err := createImage("/usr/share/nwg-dock/grid.svg", *imgSize)
+	image, err := createImage("/usr/share/nwg-dock/grid.svg", imgSizeScaled)
 	if err == nil {
 		button.SetImage(image)
-		button.SetImagePosition(gtk.POS_TOP)
 		button.SetAlwaysShowImage(true)
-		//button.SetLabel("")
 
 		button.Connect("clicked", func() {
 			launch(*launcherCmd)
