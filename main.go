@@ -32,6 +32,7 @@ var (
 	outerOrientation, innerOrientation gtk.Orientation
 	widgetAnchor, menuAnchor           gdk.Gravity
 	imgSizeScaled                      int
+	currentWsNum, targetWsNum          int64
 )
 
 // Flags
@@ -131,8 +132,35 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		}
 	}
 
+	wsButton, _ := gtk.ButtonNew()
+	image, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/%v.svg", currentWsNum), imgSizeScaled)
+	if err == nil {
+		wsButton.SetImage(image)
+		wsButton.SetAlwaysShowImage(true)
+		wsButton.AddEvents(int(gdk.SCROLL_MASK))
+
+		wsButton.Connect("clicked", func() {
+			focusWorkspace(targetWsNum)
+		})
+
+		wsButton.Connect("enter-notify-event", cancelClose)
+
+		wsButton.Connect("scroll-event", func(btn *gtk.Button, e *gdk.Event) bool {
+			event := gdk.EventScrollNewFromEvent(e)
+			if event.Direction() == gdk.SCROLL_UP {
+				fmt.Println("scroll up")
+				return true
+			} else if event.Direction() == gdk.SCROLL_DOWN {
+				fmt.Println("scroll down")
+				return true
+			}
+			return false
+		})
+	}
+	mainBox.PackStart(wsButton, false, false, 0)
+
 	button, _ := gtk.ButtonNew()
-	image, err := createImage("/usr/share/nwg-dock/grid.svg", imgSizeScaled)
+	image, err = createImage("/usr/share/nwg-dock/grid.svg", imgSizeScaled)
 	if err == nil {
 		button.SetImage(image)
 		button.SetAlwaysShowImage(true)
@@ -143,6 +171,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		button.Connect("enter-notify-event", cancelClose)
 	}
 	mainBox.PackStart(button, false, false, 0)
+
 	mainBox.ShowAll()
 }
 
@@ -212,6 +241,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to create window:", err)
 	}
+
 	layershell.InitForWindow(win)
 
 	if *targetOutput != "" {
@@ -305,15 +335,19 @@ func main() {
 		log.Fatal("Couldn't list tasks:", err)
 	}
 	oldTasks = tasks
+	var oldWsNum int64
 
 	buildMainBox(tasks, alignmentBox)
 
 	glib.TimeoutAdd(uint(150), func() bool {
 		currentTasks, _ := listTasks()
-		if len(currentTasks) != len(oldTasks) || refresh {
+		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
 			fmt.Println("refreshing...")
+			fmt.Println(currentWsNum)
 			buildMainBox(currentTasks, alignmentBox)
 			oldTasks = currentTasks
+			oldWsNum = currentWsNum
+			targetWsNum = currentWsNum
 			refresh = false
 		}
 		return true

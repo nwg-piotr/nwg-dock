@@ -59,6 +59,14 @@ func listTasks() ([]task, error) {
 		return nil, err
 	}
 
+	// In order not to add a separate function, let's set the global currentWsNum variable we need here
+	for _, ws := range workspaces {
+		if ws.Focused {
+			currentWsNum = ws.Num
+			break
+		}
+	}
+
 	// all nodes in the tree
 	nodes := tree.Nodes
 
@@ -757,6 +765,26 @@ func launch(ID string) {
 
 func focusCon(conID int64) {
 	cmd := fmt.Sprintf("[con_id=%v] focus", conID)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	client, err := sway.New(ctx)
+	if err != nil {
+		log.Panic(err)
+	}
+	client.RunCommand(ctx, cmd)
+
+	if *autohide {
+		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+			gtk.MainQuit()
+			return false
+		})
+	}
+}
+
+func focusWorkspace(num int64) {
+	fmt.Println("focus", num)
+	cmd := fmt.Sprintf("workspace number %v", num)
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
