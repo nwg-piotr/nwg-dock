@@ -10,10 +10,10 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- Go 1.16
-- gtk3
-- gtk-layer-shell
-- `nwg-launchers` package installed: optionally. You may use another launcher, see help.
+- `go` 1.16
+- `gtk3`
+- `gtk-layer-shell`
+- `nwg-launchers`: optionally. You may use another launcher, see help.
 
 ### Steps
 
