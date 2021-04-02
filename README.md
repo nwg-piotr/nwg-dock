@@ -15,6 +15,8 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 2. Install necessary golang libraries with `make get`. First time it may take awhile.
 3. `sudo make install`
 
+Or you may try just `sudo make install`, to install the binary you downloaded in the `/bin` directory.
+
 ## Running
 
 Either start the dock permanently in the sway config file, or assign the command to some key binding.
