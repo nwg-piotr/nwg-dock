@@ -54,3 +54,16 @@ Usage of nwg-dock:
   -x	set eXclusive zone: move other windows aside
 
 ```
+
+## Styling
+
+Edit `~/.config/nwg-dock/style.css` to your taste.
+
+## Credits
+
+This program uses some great libraries:
+
+- [gotk3](https://github.com/gotk3/gotk3) Copyright (c) 2013-2014 Conformal Systems LLC,
+Copyright (c) 2015-2018 gotk3 contributors
+- [gotk3-layershell](https://github.com/dlasky/gotk3-layershell) by [@dlasky](https://github.com/dlasky/gotk3-layershell/commits?author=dlasky) - many thanks for writing this software, and for patience with my requests!
+- [go-sway](https://github.com/joshuarubin/go-sway) Copyright (c) 2019 Joshua Rubin
