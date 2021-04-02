@@ -232,6 +232,10 @@ func main() {
 	// if doesn't exist:
 	createDir(configDirectory)
 
+	if !pathExists(fmt.Sprintf("%s/style.css", configDirectory)) {
+		copyFile("/usr/share/nwg-dock/style.css", fmt.Sprintf("%s/style.css", configDirectory))
+	}
+
 	cacheDirectory := cacheDir()
 	if cacheDirectory == "" {
 		log.Panic("Couldn't determine cache directory location")

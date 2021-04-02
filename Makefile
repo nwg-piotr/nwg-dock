@@ -12,6 +12,7 @@ build:
 install:
 	mkdir -p /usr/share/nwg-dock
 	cp -r images /usr/share/nwg-dock
+	cp config/style.css /usr/share/nwg-dock
 	cp bin/nwg-dock /usr/bin
 
 uninstall:
