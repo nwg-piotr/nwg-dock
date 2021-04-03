@@ -10,10 +10,12 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- `go` 1.16: just to build
+- `go` up to 1.16.2: just to build
 - `gtk3`
 - `gtk-layer-shell`
 - `nwg-launchers`: optionally. You may use another launcher, see help.
+
+**Please note**, that the gtk-layer-shell library does not yet seem to behave well with **go 1.16.3**.
 
 ### Steps
 
@@ -73,3 +75,4 @@ This program uses some great libraries:
 Copyright (c) 2015-2018 gotk3 contributors
 - [gotk3-layershell](https://github.com/dlasky/gotk3-layershell) by [@dlasky](https://github.com/dlasky/gotk3-layershell/commits?author=dlasky) - many thanks for writing this software, and for patience with my requests!
 - [go-sway](https://github.com/joshuarubin/go-sway) Copyright (c) 2019 Joshua Rubin
+- [go-singleinstance](github.com/allan-simon/go-singleinstance) Copyright (c) 2015 Allan Simon
