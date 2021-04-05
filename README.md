@@ -10,7 +10,7 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- `go` up to 1.16.2: just to build. **Please note**, that the gtk-layer-shell library does not yet seem to behave well with **go 1.16.3**.
+- `go` up to 1.16.2: just to build. **Please note**, that the gotk3 library does not yet seem to behave well with **go 1.16.3**.
 - `gtk3`
 - `gtk-layer-shell`
 - `nwg-launchers`: optionally. You may use another launcher, see help.
