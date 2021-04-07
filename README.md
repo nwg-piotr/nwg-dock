@@ -41,7 +41,7 @@ As the dock in autohide mode is expected to be started from the sway config with
 exec_always nwg-dock -d
 ```
 
-- re-execution of the command with the `-d` argument won't not kill the running instance. If the dock is already
+...re-execution of the command with the `-d` argument won't not kill the running instance. If the dock is already
  running, another instance will exit with 0 code.
 
 ```txt
