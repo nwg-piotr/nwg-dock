@@ -209,7 +209,7 @@ func pinnedMenuContext(taskID string) gtk.Menu {
 }
 
 /*
-Window on-leave-notify event calls gtk.MainQuit() with glib Timeout 1000 ms.
+Window on-leave-notify event hides the dock with glib Timeout 1000 ms.
 We might have left the window by accident, so let's clear the timeout if window re-entered.
 Furthermore - hovering a button triggers window on-leave-notify event, and the timeout
 needs to be cleared as well.
@@ -784,10 +784,11 @@ func launch(ID string) {
 	go cmd.Run()
 
 	if *autohide {
-		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+		/*src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+			dockWindow.Hide()
 			return false
-		})
+		})*/
+		dockWindow.Hide()
 	}
 }
 
@@ -804,7 +805,7 @@ func focusCon(conID int64) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -823,7 +824,7 @@ func focusWorkspace(num int64) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -842,7 +843,7 @@ func killCon(conID int64) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -862,7 +863,7 @@ func con2WS(conID int64, wsNum int) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -902,4 +903,19 @@ func mapOutputs() (map[string]*gdk.Monitor, error) {
 		}
 	}
 	return result, nil
+}
+
+func listMonitors() ([]gdk.Monitor, error) {
+	var monitors []gdk.Monitor
+	display, err := gdk.DisplayGetDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	num := display.GetNMonitors()
+	for i := 0; i < num; i++ {
+		monitor, _ := display.GetMonitor(i)
+		monitors = append(monitors, *monitor)
+	}
+	return monitors, nil
 }

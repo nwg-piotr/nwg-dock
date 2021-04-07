@@ -33,19 +33,20 @@ var (
 	widgetAnchor, menuAnchor           gdk.Gravity
 	imgSizeScaled                      int
 	currentWsNum, targetWsNum          int64
+	dockWindow                         *gtk.Window
 )
 
 // Flags
 var cssFileName = flag.String("s", "style.css", "Styling: css file name")
 var targetOutput = flag.String("o", "", "name of Output to display the dock on")
 var displayVersion = flag.Bool("v", false, "display Version information")
-var autohide = flag.Bool("d", false, "auto-hiDe: close window when left or a button clicked")
+var autohide = flag.Bool("d", false, "auto-hiDe: show dock when hotspot hovered, close when left or a button clicked")
 var full = flag.Bool("f", false, "take Full screen width/height")
 var numWS = flag.Int64("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: \"bottom\", \"top\" or \"left\"")
 var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside")
 var imgSize = flag.Int("i", 48, "Icon size")
-var layer = flag.String("l", "top", "Layer \"top\" or \"bottom\"")
+var layer = flag.String("l", "overlay", "Layer \"overlay\", \"top\" or \"bottom\"")
 var launcherCmd = flag.String("c", "nwggrid -p", "Command assigned to the launcher button")
 var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\", \"center\" or \"end\"")
 var marginTop = flag.Int("mt", 0, "Margin Top")
@@ -191,6 +192,54 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.ShowAll()
 }
 
+func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
+	w, h := dockWindow.GetSize()
+
+	win, _ := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+
+	layershell.InitForWindow(win)
+	layershell.SetMonitor(win, &monitor)
+
+	//win.SetProperty("name", "hot-spot")
+
+	box, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+	win.Add(box)
+
+	win.Connect("enter-notify-event", func() {
+		dockWindow.Hide()
+		dockWindow.Show()
+	})
+
+	if *position == "bottom" || *position == "top" {
+		win.SetSizeRequest(w, 6)
+		if *position == "bottom" {
+			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
+		} else {
+			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, true)
+		}
+
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, *full)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_RIGHT, *full)
+	}
+
+	if *position == "left" {
+		win.SetSizeRequest(6, h)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, true)
+
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, *full)
+		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, *full)
+	}
+
+	layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
+
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, *marginTop)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_LEFT, *marginLeft)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_RIGHT, *marginRight)
+	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_BOTTOM, *marginBottom)
+
+	return *win
+}
+
 func main() {
 	flag.Parse()
 
@@ -254,13 +303,14 @@ func main() {
 	} else {
 		fmt.Printf("Using style: %s\n", cssFile)
 		screen, _ := gdk.ScreenGetDefault()
-		gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+		gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 	}
 
 	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	if err != nil {
 		log.Fatal("Unable to create window:", err)
 	}
+	dockWindow = win
 
 	layershell.InitForWindow(win)
 
@@ -313,8 +363,10 @@ func main() {
 
 	if *layer == "top" {
 		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
-	} else {
+	} else if *layer == "top" {
 		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
+	} else {
+		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_OVERLAY)
 	}
 
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, *marginTop)
@@ -330,7 +382,9 @@ func main() {
 	win.Connect("leave-notify-event", func() {
 		if *autohide {
 			src, err = glib.TimeoutAdd(uint(1000), func() bool {
-				gtk.MainQuit()
+				//gtk.MainQuit()
+				win.Hide()
+				src = 0
 				return false
 			})
 		}
@@ -360,18 +414,40 @@ func main() {
 	buildMainBox(tasks, alignmentBox)
 
 	glib.TimeoutAdd(uint(150), func() bool {
-		currentTasks, _ := listTasks()
-		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-			fmt.Println("refreshing...")
-			buildMainBox(currentTasks, alignmentBox)
-			oldTasks = currentTasks
-			oldWsNum = currentWsNum
-			targetWsNum = currentWsNum
-			refresh = false
+		if win.GetVisible() {
+			currentTasks, _ := listTasks()
+			if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
+				fmt.Println("refreshing...")
+				buildMainBox(currentTasks, alignmentBox)
+				oldTasks = currentTasks
+				oldWsNum = currentWsNum
+				targetWsNum = currentWsNum
+				refresh = false
+			}
 		}
 		return true
 	})
 
 	win.ShowAll()
+
+	if *autohide {
+		win.Hide()
+
+		mRefProvider, _ := gtk.CssProviderNew()
+		if err := mRefProvider.LoadFromPath("/usr/share/nwg-dock/hotspot.css"); err != nil {
+			log.Println(err)
+		}
+
+		monitors, _ := listMonitors()
+		for _, monitor := range monitors {
+			win := setupHotSpot(monitor, win)
+
+			context, _ := win.GetStyleContext()
+			context.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+			win.ShowAll()
+		}
+	}
+
 	gtk.Main()
 }
