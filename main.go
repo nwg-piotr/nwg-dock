@@ -18,7 +18,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-const version = "0.0.1"
+const version = "0.1.0"
 
 var (
 	appDirs                            []string
@@ -86,7 +86,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	// scale icons down when their number increases
 	if *imgSize*6/(len(allItems)) < *imgSize {
-		overflow := (len(allItems) - 8) / 3
+		overflow := (len(allItems) - 6) / 3
 		imgSizeScaled = *imgSize * 6 / (6 + overflow)
 	} else {
 		imgSizeScaled = *imgSize
@@ -317,7 +317,7 @@ func main() {
 	layershell.InitForWindow(win)
 
 	if *targetOutput != "" {
-		// We need to assign layershell to a monitor, but we only know the output name!
+		// We want to assign layershell to a monitor, but we only know the output name!
 		name2mon, err := mapOutputs()
 		if err == nil {
 			layershell.SetMonitor(win, name2mon[*targetOutput])
@@ -363,12 +363,20 @@ func main() {
 		menuAnchor = gdk.GDK_GRAVITY_WEST
 	}
 
-	if *layer == "top" {
-		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
-	} else if *layer == "top" {
-		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
-	} else {
+	if *autohide {
+		// we need to cover the hotspot window, to avoid unwanted .Hide() and .Show() the dockWindow
 		layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_OVERLAY)
+		layershell.SetExclusiveZone(win, -1)
+	} else {
+		// otherwise let's leave users freedom of choice
+		if *layer == "top" {
+			layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_TOP)
+		} else if *layer == "bottom" {
+			layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_BOTTOM)
+		} else {
+			layershell.SetLayer(win, layershell.LAYER_SHELL_LAYER_OVERLAY)
+			layershell.SetExclusiveZone(win, -1)
+		}
 	}
 
 	layershell.SetMargin(win, layershell.LAYER_SHELL_EDGE_TOP, *marginTop)
