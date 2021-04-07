@@ -209,7 +209,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	})
 
 	if *position == "bottom" || *position == "top" {
-		win.SetSizeRequest(w, 6)
+		win.SetSizeRequest(w, 10)
 		if *position == "bottom" {
 			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
 		} else {
@@ -221,7 +221,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	}
 
 	if *position == "left" {
-		win.SetSizeRequest(6, h)
+		win.SetSizeRequest(10, h)
 		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, true)
 
 		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, *full)
