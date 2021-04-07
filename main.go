@@ -44,7 +44,7 @@ var autohide = flag.Bool("d", false, "auto-hiDe: show dock when hotspot hovered,
 var full = flag.Bool("f", false, "take Full screen width/height")
 var numWS = flag.Int64("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: \"bottom\", \"top\" or \"left\"")
-var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside")
+var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside; overrides the \"-l\" argument")
 var imgSize = flag.Int("i", 48, "Icon size")
 var layer = flag.String("l", "overlay", "Layer \"overlay\", \"top\" or \"bottom\"")
 var launcherCmd = flag.String("c", "nwggrid -p", "Command assigned to the launcher button")
@@ -330,6 +330,7 @@ func main() {
 
 	if *exclusive {
 		layershell.AutoExclusiveZoneEnable(win)
+		*layer = "top"
 	}
 
 	if *position == "bottom" || *position == "top" {

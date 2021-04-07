@@ -29,18 +29,33 @@ Or you may try just `sudo make install`, to install the binary you downloaded in
 Either start the dock permanently in the sway config file, or assign the command to some key binding.
 Running the command again kills existing program instance, so you may use the same key to open and close the dock.
 
+## Running in autohide mode
+
+If you run the program with the `-d` argument, it will start up hidden. Move the mouse pointer to expected dock
+ location for the dock to show up. It will be hidden a second after you leave the window or use a button. Invisible
+ hot spots to activate the dock  will be created on all your outputs, unless you specify one with the `-o` argument.
+
+As the dock in autohide mode is expected to be started from the sway config with:
+
+```text
+exec_always nwg-dock -d
+```
+
+- re-execution of the command with the `-d` argument won't not kill the running instance. If the dock is already
+ running, another instance will exit with 0 code.
+
 ```txt
 Usage of nwg-dock:
   -a string
     	Alignment in full width/height: "start", "center" or "end" (default "center")
   -c string
     	Command assigned to the launcher button (default "nwggrid -p")
-  -d	auto-hiDe: close window when left or a button clicked
+  -d	auto-hiDe: show dock when hotspot hovered, close when left or a button clicked
   -f	take Full screen width/height
   -i int
     	Icon size (default 48)
   -l string
-    	Layer "top" or "bottom" (default "top")
+    	Layer "overlay", "top" or "bottom" (default "overlay")
   -mb int
     	Margin Bottom
   -ml int
@@ -58,8 +73,7 @@ Usage of nwg-dock:
   -v	display Version information
   -w int
     	number of Workspaces you use (default 8)
-  -x	set eXclusive zone: move other windows aside
-
+  -x	set eXclusive zone: move other windows aside; overrides the "-l" argument
 ```
 
 ## Styling
