@@ -200,8 +200,6 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	layershell.InitForWindow(win)
 	layershell.SetMonitor(win, &monitor)
 
-	//win.SetProperty("name", "hot-spot")
-
 	box, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
 	win.Add(box)
 
@@ -255,7 +253,7 @@ func main() {
 		for {
 			s := <-signalChan
 			if s == syscall.SIGTERM {
-				fmt.Println("SIGTERM received, bye bye!")
+				println("SIGTERM received, bye bye!")
 				gtk.MainQuit()
 			}
 		}
@@ -269,8 +267,12 @@ func main() {
 		if err == nil {
 			i, err := strconv.Atoi(pid)
 			if err == nil {
-				fmt.Println("Running instance found, sending SIGTERM and exiting...")
-				syscall.Kill(i, syscall.SIGTERM)
+				if !*autohide {
+					println("Running instance found, sending SIGTERM and exiting...")
+					syscall.Kill(i, syscall.SIGTERM)
+				} else {
+					println("Already running")
+				}
 			}
 		}
 		os.Exit(0)
@@ -320,7 +322,7 @@ func main() {
 		if err == nil {
 			layershell.SetMonitor(win, name2mon[*targetOutput])
 		} else {
-			fmt.Println(err)
+			println(err)
 		}
 	}
 
@@ -417,7 +419,7 @@ func main() {
 		if win.GetVisible() {
 			currentTasks, _ := listTasks()
 			if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-				fmt.Println("refreshing...")
+				println("refreshing...")
 				buildMainBox(currentTasks, alignmentBox)
 				oldTasks = currentTasks
 				oldWsNum = currentWsNum
@@ -435,7 +437,7 @@ func main() {
 
 		mRefProvider, _ := gtk.CssProviderNew()
 		if err := mRefProvider.LoadFromPath("/usr/share/nwg-dock/hotspot.css"); err != nil {
-			log.Println(err)
+			println(err)
 		}
 
 		monitors, _ := listMonitors()

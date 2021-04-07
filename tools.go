@@ -281,7 +281,6 @@ func taskButton(t task, instances []task) *gtk.Box {
 			} else if btnEvent.Button() == 3 {
 				contextMenu := taskMenuContext(t.ID, instances)
 				contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
-				fmt.Println("Pressed 3, t.conID =", t.conID)
 				return true
 			}
 			return false
@@ -293,7 +292,6 @@ func taskButton(t task, instances []task) *gtk.Box {
 
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	// menu.SetReserveToggleSize(false)
 
 	iconName, _ := getIcon(taskID)
 	for _, instance := range instances {
@@ -371,13 +369,13 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	if !inPinned(taskID) {
 		pinItem.SetLabel("Pin")
 		pinItem.Connect("activate", func() {
-			fmt.Println("pin", taskID)
+			println("pin", taskID)
 			pinTask(taskID)
 		})
 	} else {
 		pinItem.SetLabel("Unpin")
 		pinItem.Connect("activate", func() {
-			fmt.Println("unpin", taskID)
+			println("unpin", taskID)
 			unpinTask(taskID)
 		})
 	}
@@ -423,7 +421,7 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
 	if strings.HasPrefix(icon, "/") {
 		pixbuf, err := gdk.PixbufNewFromFileAtSize(icon, size, size)
 		if err != nil {
-			fmt.Println("Error Pixbuf.new_from_file_at_size: ", err)
+			println(err)
 			return nil, err
 		}
 		return pixbuf, nil
@@ -717,7 +715,7 @@ func loadTextFile(path string) ([]string, error) {
 func pinTask(itemID string) {
 	for _, item := range pinned {
 		if item == itemID {
-			fmt.Println(item, "already pinned")
+			println(item, "already pinned")
 			return
 		}
 	}
@@ -754,7 +752,7 @@ func savePinned() {
 			_, err := f.WriteString(line + "\n")
 
 			if err != nil {
-				fmt.Println("Error saving pinned", err)
+				println("Error saving pinned", err)
 			}
 		}
 
@@ -764,7 +762,7 @@ func savePinned() {
 func launch(ID string) {
 	e, err := getExec(ID)
 	if err != nil {
-		fmt.Println(err)
+		println(err)
 	}
 
 	elements := strings.Split(e, " ")
