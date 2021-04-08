@@ -26,23 +26,30 @@ Or you may try just `sudo make install`, to install the binary you downloaded in
 
 ## Running
 
-Either start the dock permanently in the sway config file, or assign the command to some key binding.
-Running the command again kills existing program instance, so you may use the same key to open and close the dock.
+Either start the dock permanently in the sway config file,
 
-## Running in autohide mode
+```text
+exec nwg-dock [arguments]
+```
+
+or assign the command to some key binding. Running the command again kills existing program instance, so you may use
+the same key to open and close the dock.
+
+## Running in autohiDe mode
 
 If you run the program with the `-d` argument, it will start up hidden. Move the mouse pointer to expected dock
  location for the dock to show up. It will be hidden a second after you leave the window or use a button. Invisible
- hot spots to activate the dock  will be created on all your outputs, unless you specify one with the `-o` argument.
+ hot spots to activate the dock will be created on all your outputs, unless you specify one with the `-o` argument.
 
-As the dock in autohide mode is expected to be started from the sway config with:
+As the dock in autohide mode is expected to be started from the sway config with
 
 ```text
 exec_always nwg-dock -d
 ```
 
-...re-execution of the command with the `-d` argument won't not kill the running instance. If the dock is already
- running, another instance will exit with 0 code.
+...re-execution of the command with the `-d` argument won't kill the running instance. If the dock is already
+ running, another instance will exit with 0 code. In case you'd like to terminate it anyway, just use the
+ `nwg-dock` command with no argument.
 
 ```txt
 Usage of nwg-dock:

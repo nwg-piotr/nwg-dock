@@ -261,7 +261,8 @@ func main() {
 		}
 	}()
 
-	// We don't want multiple instances. Kill the running instance and exit.
+	// Unless we are in autohide mode, we probably want the same key/mouse binding to turn the dock off.
+	// Kill the running instance and exit.
 	lockFilePath := fmt.Sprintf("%s/nwg-dock.lock", tempDir())
 	lockFile, err := singleinstance.CreateLockFile(lockFilePath)
 	if err != nil {
@@ -318,11 +319,12 @@ func main() {
 
 	layershell.InitForWindow(win)
 
+	var output2mon map[string]*gdk.Monitor
 	if *targetOutput != "" {
 		// We want to assign layershell to a monitor, but we only know the output name!
-		name2mon, err := mapOutputs()
+		output2mon, err = mapOutputs()
 		if err == nil {
-			layershell.SetMonitor(win, name2mon[*targetOutput])
+			layershell.SetMonitor(win, output2mon[*targetOutput])
 		} else {
 			println(err)
 		}
@@ -451,9 +453,21 @@ func main() {
 			println(err)
 		}
 
-		monitors, _ := listMonitors()
-		for _, monitor := range monitors {
-			win := setupHotSpot(monitor, win)
+		if *targetOutput == "" {
+			// hot spots on all displays
+			monitors, _ := listMonitors()
+			for _, monitor := range monitors {
+				win := setupHotSpot(monitor, win)
+
+				context, _ := win.GetStyleContext()
+				context.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+				win.ShowAll()
+			}
+		} else {
+			// hot spot on the selected display only
+			monitor, _ := output2mon[*targetOutput]
+			win := setupHotSpot(*monitor, win)
 
 			context, _ := win.GetStyleContext()
 			context.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)

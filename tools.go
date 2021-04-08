@@ -893,7 +893,7 @@ func mapOutputs() (map[string]*gdk.Monitor, error) {
 	for i := 0; i < num; i++ {
 		monitor, _ := display.GetMonitor(i)
 		geometry := monitor.GetGeometry()
-
+		// assign output to monitor on the basis of the same x, y coordinates
 		for _, output := range outputs {
 			if int(output.Rect.X) == geometry.GetX() && int(output.Rect.Y) == geometry.GetY() {
 				result[output.Name] = monitor
