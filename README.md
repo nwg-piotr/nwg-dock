@@ -10,24 +10,50 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- `go` up to 1.16.2: just to build. **Please note**, that the gotk3 library does not yet seem to behave well with **go 1.16.3**.
+- `go` up to 1.16.2: just to build. See the note below.
 - `gtk3`
 - `gtk-layer-shell`
 - `nwg-launchers`: optionally. You may use another launcher, see help.
 
+**Note**: For go 1.16.3 a more recent gotk3 version would be necessary. For now I tried the
+ `86f85cbecd0b990beab32a3471b08ad3cdd8f93b` commit and it worked, but would give me deprecation warnings.
+ It also needed some changes to the code, as `glib.TimeoutAdd` now returns just int, w/o `error`. Let's wait a little
+  bit more.
 
 ### Steps
 
 1. Clone the repository, cd into it.
-2. Install necessary golang libraries with `make get`. First time it may take awhile.
+2. Install necessary golang libraries with `make get`. First time it may take awhile, be patient.
 3. `sudo make install`
 
-Or you may try just `sudo make install`, to install the binary you downloaded in the `/bin` directory.
+Or you may skip 1 and 2, and try just `sudo make install`. You've downloaded the binary in the `/bin` directory.
 
 ## Running
 
-Either start the dock permanently in the sway config file, or assign the command to some key binding.
-Running the command again kills existing program instance, so you may use the same key to open and close the dock.
+Either start the dock permanently in the sway config file,
+
+```text
+exec nwg-dock [arguments]
+```
+
+or assign the command to some key binding. Running the command again kills existing program instance, so you may use
+the same key to open and close the dock.
+
+## Running in autohiDe mode
+
+If you run the program with the `-d` argument, it will start up hidden. Move the mouse pointer to expected dock
+ location for the dock to show up. It will be hidden a second after you leave the window or use a button. Invisible
+ hot spots to activate the dock will be created on all your outputs, unless you specify one with the `-o` argument.
+
+As the dock in autohide mode is expected to be started from the sway config with
+
+```text
+exec_always nwg-dock -d
+```
+
+...re-execution of the command with the `-d` argument won't kill the running instance. If the dock is already
+ running, another instance will exit with 0 code. In case you'd like to terminate it anyway, just use the
+ `nwg-dock` command with no argument.
 
 ```txt
 Usage of nwg-dock:
@@ -35,12 +61,12 @@ Usage of nwg-dock:
     	Alignment in full width/height: "start", "center" or "end" (default "center")
   -c string
     	Command assigned to the launcher button (default "nwggrid -p")
-  -d	auto-hiDe: close window when left or a button clicked
+  -d	auto-hiDe: show dock when hotspot hovered, close when left or a button clicked
   -f	take Full screen width/height
   -i int
     	Icon size (default 48)
   -l string
-    	Layer "top" or "bottom" (default "top")
+    	Layer "overlay", "top" or "bottom" (default "overlay")
   -mb int
     	Margin Bottom
   -ml int
@@ -58,8 +84,7 @@ Usage of nwg-dock:
   -v	display Version information
   -w int
     	number of Workspaces you use (default 8)
-  -x	set eXclusive zone: move other windows aside
-
+  -x	set eXclusive zone: move other windows aside; overrides the "-l" argument
 ```
 
 ## Styling

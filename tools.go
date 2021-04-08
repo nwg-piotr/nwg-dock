@@ -209,7 +209,7 @@ func pinnedMenuContext(taskID string) gtk.Menu {
 }
 
 /*
-Window on-leave-notify event calls gtk.MainQuit() with glib Timeout 1000 ms.
+Window on-leave-notify event hides the dock with glib Timeout 1000 ms.
 We might have left the window by accident, so let's clear the timeout if window re-entered.
 Furthermore - hovering a button triggers window on-leave-notify event, and the timeout
 needs to be cleared as well.
@@ -281,7 +281,6 @@ func taskButton(t task, instances []task) *gtk.Box {
 			} else if btnEvent.Button() == 3 {
 				contextMenu := taskMenuContext(t.ID, instances)
 				contextMenu.PopupAtWidget(button, widgetAnchor, menuAnchor, nil)
-				fmt.Println("Pressed 3, t.conID =", t.conID)
 				return true
 			}
 			return false
@@ -293,7 +292,6 @@ func taskButton(t task, instances []task) *gtk.Box {
 
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	// menu.SetReserveToggleSize(false)
 
 	iconName, _ := getIcon(taskID)
 	for _, instance := range instances {
@@ -371,13 +369,13 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	if !inPinned(taskID) {
 		pinItem.SetLabel("Pin")
 		pinItem.Connect("activate", func() {
-			fmt.Println("pin", taskID)
+			println("pin", taskID)
 			pinTask(taskID)
 		})
 	} else {
 		pinItem.SetLabel("Unpin")
 		pinItem.Connect("activate", func() {
-			fmt.Println("unpin", taskID)
+			println("unpin", taskID)
 			unpinTask(taskID)
 		})
 	}
@@ -423,7 +421,7 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
 	if strings.HasPrefix(icon, "/") {
 		pixbuf, err := gdk.PixbufNewFromFileAtSize(icon, size, size)
 		if err != nil {
-			fmt.Println("Error Pixbuf.new_from_file_at_size: ", err)
+			println(err)
 			return nil, err
 		}
 		return pixbuf, nil
@@ -717,7 +715,7 @@ func loadTextFile(path string) ([]string, error) {
 func pinTask(itemID string) {
 	for _, item := range pinned {
 		if item == itemID {
-			fmt.Println(item, "already pinned")
+			println(item, "already pinned")
 			return
 		}
 	}
@@ -754,7 +752,7 @@ func savePinned() {
 			_, err := f.WriteString(line + "\n")
 
 			if err != nil {
-				fmt.Println("Error saving pinned", err)
+				println("Error saving pinned", err)
 			}
 		}
 
@@ -764,7 +762,7 @@ func savePinned() {
 func launch(ID string) {
 	e, err := getExec(ID)
 	if err != nil {
-		fmt.Println(err)
+		println(err)
 	}
 
 	elements := strings.Split(e, " ")
@@ -784,10 +782,11 @@ func launch(ID string) {
 	go cmd.Run()
 
 	if *autohide {
-		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+		/*src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+			dockWindow.Hide()
 			return false
-		})
+		})*/
+		dockWindow.Hide()
 	}
 }
 
@@ -804,7 +803,7 @@ func focusCon(conID int64) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -823,7 +822,7 @@ func focusWorkspace(num int64) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -842,7 +841,7 @@ func killCon(conID int64) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -862,7 +861,7 @@ func con2WS(conID int64, wsNum int) {
 
 	if *autohide {
 		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			gtk.MainQuit()
+			dockWindow.Hide()
 			return false
 		})
 	}
@@ -894,7 +893,7 @@ func mapOutputs() (map[string]*gdk.Monitor, error) {
 	for i := 0; i < num; i++ {
 		monitor, _ := display.GetMonitor(i)
 		geometry := monitor.GetGeometry()
-
+		// assign output to monitor on the basis of the same x, y coordinates
 		for _, output := range outputs {
 			if int(output.Rect.X) == geometry.GetX() && int(output.Rect.Y) == geometry.GetY() {
 				result[output.Name] = monitor
@@ -902,4 +901,19 @@ func mapOutputs() (map[string]*gdk.Monitor, error) {
 		}
 	}
 	return result, nil
+}
+
+func listMonitors() ([]gdk.Monitor, error) {
+	var monitors []gdk.Monitor
+	display, err := gdk.DisplayGetDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	num := display.GetNMonitors()
+	for i := 0; i < num; i++ {
+		monitor, _ := display.GetMonitor(i)
+		monitors = append(monitors, *monitor)
+	}
+	return monitors, nil
 }
