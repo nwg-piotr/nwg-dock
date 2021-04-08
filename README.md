@@ -10,19 +10,23 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- `go` up to 1.16.2: just to build. **Please note**, that the gotk3 library does not yet seem to behave well with **go 1.16.3**.
+- `go` up to 1.16.2: just to build. See the note below.
 - `gtk3`
 - `gtk-layer-shell`
 - `nwg-launchers`: optionally. You may use another launcher, see help.
 
+**Note**: For go 1.16.3 a more recent gotk3 version would be necessary. For now I tried the
+ `86f85cbecd0b990beab32a3471b08ad3cdd8f93b` commit and it worked, but would give me deprecation warnings.
+ It also needed some changes to the code, as `glib.TimeoutAdd` now returns just int, w/o `error`. Let's wait a little
+  bit more.
 
 ### Steps
 
 1. Clone the repository, cd into it.
-2. Install necessary golang libraries with `make get`. First time it may take awhile.
+2. Install necessary golang libraries with `make get`. First time it may take awhile, be patient.
 3. `sudo make install`
 
-Or you may try just `sudo make install`, to install the binary you downloaded in the `/bin` directory.
+Or you may skip 1 and 2, and try just `sudo make install`. You've downloaded the binary in the `/bin` directory.
 
 ## Running
 

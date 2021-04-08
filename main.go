@@ -397,7 +397,6 @@ func main() {
 	win.Connect("leave-notify-event", func() {
 		if *autohide {
 			src, err = glib.TimeoutAdd(uint(1000), func() bool {
-				//gtk.MainQuit()
 				win.Hide()
 				src = 0
 				return false
