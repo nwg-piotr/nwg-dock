@@ -204,6 +204,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	win.Add(box)
 
 	win.Connect("enter-notify-event", func() {
+		layershell.SetMonitor(dockWindow, &monitor)
 		dockWindow.Hide()
 		dockWindow.Show()
 	})
