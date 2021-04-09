@@ -18,7 +18,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-const version = "0.1.0"
+const version = "0.1.1"
 
 var (
 	appDirs                            []string
@@ -204,6 +204,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	win.Add(box)
 
 	win.Connect("enter-notify-event", func() {
+		layershell.SetMonitor(dockWindow, &monitor)
 		dockWindow.Hide()
 		dockWindow.Show()
 	})
@@ -428,16 +429,14 @@ func main() {
 	buildMainBox(tasks, alignmentBox)
 
 	glib.TimeoutAdd(uint(150), func() bool {
-		if win.GetVisible() {
-			currentTasks, _ := listTasks()
-			if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-				println("refreshing...")
-				buildMainBox(currentTasks, alignmentBox)
-				oldTasks = currentTasks
-				oldWsNum = currentWsNum
-				targetWsNum = currentWsNum
-				refresh = false
-			}
+		currentTasks, _ := listTasks()
+		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
+			println("refreshing...")
+			buildMainBox(currentTasks, alignmentBox)
+			oldTasks = currentTasks
+			oldWsNum = currentWsNum
+			targetWsNum = currentWsNum
+			refresh = false
 		}
 		return true
 	})

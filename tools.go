@@ -650,6 +650,7 @@ func getExec(appName string) (string, error) {
 					break
 				}
 			}
+			return cmd, nil
 		}
 	}
 	return cmd, nil
@@ -769,15 +770,32 @@ func launch(ID string) {
 
 	// find prepended env variables, if any
 	envVarsNum := strings.Count(e, "=")
+	var envVars []string
 
-	cmd := exec.Command(elements[envVarsNum], elements[1+envVarsNum:]...)
+	cmdIdx := 0
+	lastEnvVarIdx := 0
 
 	if envVarsNum > 0 {
+		for idx, item := range elements {
+			if strings.Contains(item, "=") {
+				lastEnvVarIdx = idx
+				envVars = append(envVars, item)
+			}
+		}
+		cmdIdx = lastEnvVarIdx + 1
+	}
+
+	cmd := exec.Command(elements[cmdIdx], elements[1+cmdIdx:]...)
+
+	if len(envVars) > 0 {
 		cmd.Env = os.Environ()
-		for i := 0; i < envVarsNum; i++ {
-			cmd.Env = append(cmd.Env, elements[i])
+		for _, envVar := range envVars {
+			cmd.Env = append(cmd.Env, envVar)
 		}
 	}
+
+	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], elements[1+cmdIdx:])
+	println(msg)
 
 	go cmd.Run()
 
