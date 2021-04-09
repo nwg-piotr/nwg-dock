@@ -429,16 +429,14 @@ func main() {
 	buildMainBox(tasks, alignmentBox)
 
 	glib.TimeoutAdd(uint(150), func() bool {
-		if win.GetVisible() {
-			currentTasks, _ := listTasks()
-			if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-				println("refreshing...")
-				buildMainBox(currentTasks, alignmentBox)
-				oldTasks = currentTasks
-				oldWsNum = currentWsNum
-				targetWsNum = currentWsNum
-				refresh = false
-			}
+		currentTasks, _ := listTasks()
+		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
+			println("refreshing...")
+			buildMainBox(currentTasks, alignmentBox)
+			oldTasks = currentTasks
+			oldWsNum = currentWsNum
+			targetWsNum = currentWsNum
+			refresh = false
 		}
 		return true
 	})
