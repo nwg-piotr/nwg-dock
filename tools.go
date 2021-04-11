@@ -604,7 +604,10 @@ func searchDesktopDirs(badAppID string) string {
 		items, _ := ioutil.ReadDir(d)
 		for _, item := range items {
 			if strings.Contains(item.Name(), b4Hyphen) {
-				return filepath.Join(d, item.Name())
+				//Let's check items starting from 'org.' first
+				if strings.Count(item.Name(), ".") > 1 {
+					return filepath.Join(d, item.Name())
+				}
 			}
 		}
 	}
