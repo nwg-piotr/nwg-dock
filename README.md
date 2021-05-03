@@ -24,7 +24,8 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 1. Clone the repository, cd into it.
 2. Install necessary golang libraries with `make get`. First time it may take awhile, be patient.
-3. `sudo make install`
+3. `make build`
+4. `sudo make install`
 
 Or you may skip 1 and 2, and try just `sudo make install`. You've downloaded the binary in the `/bin` directory.
 
