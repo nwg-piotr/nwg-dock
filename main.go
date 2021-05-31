@@ -53,6 +53,8 @@ var marginTop = flag.Int("mt", 0, "Margin Top")
 var marginLeft = flag.Int("ml", 0, "Margin Left")
 var marginRight = flag.Int("mr", 0, "Margin Right")
 var marginBottom = flag.Int("mb", 0, "Margin Bottom")
+var noWs = flag.Bool("nows", false, "don't show the workspace switcher")
+var noLauncher = flag.Bool("nolauncher", false, "don't show launcher button switcher")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -133,61 +135,65 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		}
 	}
 
-	wsButton, _ := gtk.ButtonNew()
-	wsImage, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum), imgSizeScaled)
-	if err == nil {
-		wsButton.SetImage(wsImage)
-		wsButton.SetAlwaysShowImage(true)
-		wsButton.AddEvents(int(gdk.SCROLL_MASK))
+	if !*noWs {
+		wsButton, _ := gtk.ButtonNew()
+		wsImage, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum), imgSizeScaled)
+		if err == nil {
+			wsButton.SetImage(wsImage)
+			wsButton.SetAlwaysShowImage(true)
+			wsButton.AddEvents(int(gdk.SCROLL_MASK))
 
-		wsButton.Connect("clicked", func() {
-			focusWorkspace(targetWsNum)
-		})
+			wsButton.Connect("clicked", func() {
+				focusWorkspace(targetWsNum)
+			})
 
-		wsButton.Connect("enter-notify-event", cancelClose)
+			wsButton.Connect("enter-notify-event", cancelClose)
 
-		wsButton.Connect("scroll-event", func(btn *gtk.Button, e *gdk.Event) bool {
-			event := gdk.EventScrollNewFromEvent(e)
-			if event.Direction() == gdk.SCROLL_UP {
-				if targetWsNum < *numWS && targetWsNum < 20 {
-					targetWsNum++
-				} else {
-					targetWsNum = 1
+			wsButton.Connect("scroll-event", func(btn *gtk.Button, e *gdk.Event) bool {
+				event := gdk.EventScrollNewFromEvent(e)
+				if event.Direction() == gdk.SCROLL_UP {
+					if targetWsNum < *numWS && targetWsNum < 20 {
+						targetWsNum++
+					} else {
+						targetWsNum = 1
+					}
+					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
+						targetWsNum), imgSizeScaled, imgSizeScaled)
+					wsImage.SetFromPixbuf(pixbuf)
+
+					return true
+				} else if event.Direction() == gdk.SCROLL_DOWN {
+					if targetWsNum > 1 {
+						targetWsNum--
+					} else {
+						targetWsNum = *numWS
+					}
+					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
+						targetWsNum), imgSizeScaled, imgSizeScaled)
+					wsImage.SetFromPixbuf(pixbuf)
+
+					return true
 				}
-				pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
-					targetWsNum), imgSizeScaled, imgSizeScaled)
-				wsImage.SetFromPixbuf(pixbuf)
-
-				return true
-			} else if event.Direction() == gdk.SCROLL_DOWN {
-				if targetWsNum > 1 {
-					targetWsNum--
-				} else {
-					targetWsNum = *numWS
-				}
-				pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
-					targetWsNum), imgSizeScaled, imgSizeScaled)
-				wsImage.SetFromPixbuf(pixbuf)
-
-				return true
-			}
-			return false
-		})
+				return false
+			})
+		}
+		mainBox.PackStart(wsButton, false, false, 0)
 	}
-	mainBox.PackStart(wsButton, false, false, 0)
 
-	button, _ := gtk.ButtonNew()
-	image, err := createImage("/usr/share/nwg-dock/images/grid.svg", imgSizeScaled)
-	if err == nil {
-		button.SetImage(image)
-		button.SetAlwaysShowImage(true)
+	if !*noLauncher {
+		button, _ := gtk.ButtonNew()
+		image, err := createImage("/usr/share/nwg-dock/images/grid.svg", imgSizeScaled)
+		if err == nil {
+			button.SetImage(image)
+			button.SetAlwaysShowImage(true)
 
-		button.Connect("clicked", func() {
-			launch(*launcherCmd)
-		})
-		button.Connect("enter-notify-event", cancelClose)
+			button.Connect("clicked", func() {
+				launch(*launcherCmd)
+			})
+			button.Connect("enter-notify-event", cancelClose)
+		}
+		mainBox.PackStart(button, false, false, 0)
 	}
-	mainBox.PackStart(button, false, false, 0)
 
 	mainBox.ShowAll()
 }
