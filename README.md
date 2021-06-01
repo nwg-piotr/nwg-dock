@@ -13,7 +13,8 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 - `go` 1.16 (just to build)
 - `gtk3`
 - `gtk-layer-shell`
-- `nwg-launchers`: optionally. You may use another launcher, see help.
+- [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or
+[nwg-launchers](https://github.com/nwg-piotr/nwg-launchers): optionally. You may use another launcher, see help.
 
 ### Steps
 
