@@ -16,6 +16,8 @@ github.com/gotk3/gotk3 v0.5.3-0.20210223154815-289cfb6dbf32 h1:wE6C/HgLUBHi8YhHl
 github.com/gotk3/gotk3 v0.5.3-0.20210223154815-289cfb6dbf32/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
 github.com/joshuarubin/go-sway v0.0.3 h1:uuY+dAMz+iAJvso+DP7TSRczDWhaV47nEPHJoRDOqjA=
 github.com/joshuarubin/go-sway v0.0.3/go.mod h1:qcDd6f25vJ0++wICwA1BainIcRC67p2Mb4lsrZ0k3/k=
+github.com/joshuarubin/go-sway v0.0.4 h1:dpmIwQ/LytG+oMrjmaVKdk1aPdW2feXK/+wAcLKIx4A=
+github.com/joshuarubin/go-sway v0.0.4/go.mod h1:qcDd6f25vJ0++wICwA1BainIcRC67p2Mb4lsrZ0k3/k=
 github.com/joshuarubin/lifecycle v1.0.0 h1:N/lPEC8f+dBZ1Tn99vShqp36LwB+LI7XNAiNadZeLUQ=
 github.com/joshuarubin/lifecycle v1.0.0/go.mod h1:sRy++ATvR9Ee21tkRdFkQeywAWvDsue66V70K0Dnl54=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

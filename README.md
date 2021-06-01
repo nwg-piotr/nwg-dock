@@ -10,24 +10,21 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- `go` up to 1.16.2: just to build. See the note below.
+- `go` 1.16 (just to build)
 - `gtk3`
 - `gtk-layer-shell`
-- `nwg-launchers`: optionally. You may use another launcher, see help.
-
-**Note**: For go 1.16.3 a more recent gotk3 version would be necessary. For now I tried the
- `86f85cbecd0b990beab32a3471b08ad3cdd8f93b` commit and it worked, but would give me deprecation warnings.
- It also needed some changes to the code, as `glib.TimeoutAdd` now returns just int, w/o `error`. Let's wait a little
-  bit more.
+- [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or
+[nwg-launchers](https://github.com/nwg-piotr/nwg-launchers): optionally. You may use another launcher (see help),
+or none at all. The launcher button won't show up, if so.
 
 ### Steps
 
 1. Clone the repository, cd into it.
-2. Install necessary golang libraries with `make get`. First time it may take awhile, be patient.
+2. Install golang libraries with `make get`. First time it may take ages, be patient.
 3. `make build`
 4. `sudo make install`
 
-Or you may skip 1 and 2, and try just `sudo make install`. You've downloaded the binary in the `/bin` directory.
+If your machine is x86_64, you may skip 2 and 3, and just install the provided binary with `sudo make install`.
 
 ## Running
 
@@ -37,8 +34,8 @@ Either start the dock permanently in the sway config file,
 exec nwg-dock [arguments]
 ```
 
-or assign the command to some key binding. Running the command again kills existing program instance, so you may use
-the same key to open and close the dock.
+or assign the command to some key binding. Running the command again kills existing program instance, so that
+you could use the same key to open and close the dock.
 
 ## Running in autohiDe mode
 
@@ -61,7 +58,7 @@ Usage of nwg-dock:
   -a string
     	Alignment in full width/height: "start", "center" or "end" (default "center")
   -c string
-    	Command assigned to the launcher button (default "nwggrid -p")
+    	Command assigned to the launcher button
   -d	auto-hiDe: show dock when hotspot hovered, close when left or a button clicked
   -f	take Full screen width/height
   -i int
@@ -76,6 +73,10 @@ Usage of nwg-dock:
     	Margin Right
   -mt int
     	Margin Top
+  -nolauncher
+    	don't show launcher button switcher
+  -nows
+    	don't show the workspace switcher
   -o string
     	name of Output to display the dock on
   -p string

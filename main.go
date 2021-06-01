@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
@@ -18,7 +19,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-const version = "0.1.2"
+const version = "0.1.3"
 
 var (
 	appDirs                            []string
@@ -34,6 +35,7 @@ var (
 	imgSizeScaled                      int
 	currentWsNum, targetWsNum          int64
 	dockWindow                         *gtk.Window
+	lCmd                               string
 )
 
 // Flags
@@ -47,12 +49,14 @@ var position = flag.String("p", "bottom", "Position: \"bottom\", \"top\" or \"le
 var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside; overrides the \"-l\" argument")
 var imgSize = flag.Int("i", 48, "Icon size")
 var layer = flag.String("l", "overlay", "Layer \"overlay\", \"top\" or \"bottom\"")
-var launcherCmd = flag.String("c", "nwggrid -p", "Command assigned to the launcher button")
+var launcherCmd = flag.String("c", "", "Command assigned to the launcher button")
 var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\", \"center\" or \"end\"")
 var marginTop = flag.Int("mt", 0, "Margin Top")
 var marginLeft = flag.Int("ml", 0, "Margin Left")
 var marginRight = flag.Int("mr", 0, "Margin Right")
 var marginBottom = flag.Int("mb", 0, "Margin Bottom")
+var noWs = flag.Bool("nows", false, "don't show the workspace switcher")
+var noLauncher = flag.Bool("nolauncher", false, "don't show the launcher button")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -133,61 +137,67 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		}
 	}
 
-	wsButton, _ := gtk.ButtonNew()
-	wsImage, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum), imgSizeScaled)
-	if err == nil {
-		wsButton.SetImage(wsImage)
-		wsButton.SetAlwaysShowImage(true)
-		wsButton.AddEvents(int(gdk.SCROLL_MASK))
+	if !*noWs {
+		wsButton, _ := gtk.ButtonNew()
+		wsImage, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum), imgSizeScaled)
+		if err == nil {
+			wsButton.SetImage(wsImage)
+			wsButton.SetAlwaysShowImage(true)
+			wsButton.AddEvents(int(gdk.SCROLL_MASK))
 
-		wsButton.Connect("clicked", func() {
-			focusWorkspace(targetWsNum)
-		})
+			wsButton.Connect("clicked", func() {
+				focusWorkspace(targetWsNum)
+			})
 
-		wsButton.Connect("enter-notify-event", cancelClose)
+			wsButton.Connect("enter-notify-event", cancelClose)
 
-		wsButton.Connect("scroll-event", func(btn *gtk.Button, e *gdk.Event) bool {
-			event := gdk.EventScrollNewFromEvent(e)
-			if event.Direction() == gdk.SCROLL_UP {
-				if targetWsNum < *numWS && targetWsNum < 20 {
-					targetWsNum++
-				} else {
-					targetWsNum = 1
+			wsButton.Connect("scroll-event", func(btn *gtk.Button, e *gdk.Event) bool {
+				event := gdk.EventScrollNewFromEvent(e)
+				if event.Direction() == gdk.SCROLL_UP {
+					if targetWsNum < *numWS && targetWsNum < 20 {
+						targetWsNum++
+					} else {
+						targetWsNum = 1
+					}
+					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
+						targetWsNum), imgSizeScaled, imgSizeScaled)
+					wsImage.SetFromPixbuf(pixbuf)
+
+					return true
+				} else if event.Direction() == gdk.SCROLL_DOWN {
+					if targetWsNum > 1 {
+						targetWsNum--
+					} else {
+						targetWsNum = *numWS
+					}
+					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
+						targetWsNum), imgSizeScaled, imgSizeScaled)
+					wsImage.SetFromPixbuf(pixbuf)
+
+					return true
 				}
-				pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
-					targetWsNum), imgSizeScaled, imgSizeScaled)
-				wsImage.SetFromPixbuf(pixbuf)
-
-				return true
-			} else if event.Direction() == gdk.SCROLL_DOWN {
-				if targetWsNum > 1 {
-					targetWsNum--
-				} else {
-					targetWsNum = *numWS
-				}
-				pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
-					targetWsNum), imgSizeScaled, imgSizeScaled)
-				wsImage.SetFromPixbuf(pixbuf)
-
-				return true
-			}
-			return false
-		})
+				return false
+			})
+		}
+		mainBox.PackStart(wsButton, false, false, 0)
 	}
-	mainBox.PackStart(wsButton, false, false, 0)
 
-	button, _ := gtk.ButtonNew()
-	image, err := createImage("/usr/share/nwg-dock/images/grid.svg", imgSizeScaled)
-	if err == nil {
-		button.SetImage(image)
-		button.SetAlwaysShowImage(true)
+	if !*noLauncher && *launcherCmd != "" {
+		button, _ := gtk.ButtonNew()
+		image, err := createImage("/usr/share/nwg-dock/images/grid.svg", imgSizeScaled)
+		if err == nil {
+			button.SetImage(image)
+			button.SetAlwaysShowImage(true)
 
-		button.Connect("clicked", func() {
-			launch(*launcherCmd)
-		})
-		button.Connect("enter-notify-event", cancelClose)
+			button.Connect("clicked", func() {
+				elements := strings.Split(*launcherCmd, " ")
+				cmd := exec.Command(elements[0], elements[1:]...)
+				go cmd.Run()
+			})
+			button.Connect("enter-notify-event", cancelClose)
+		}
+		mainBox.PackStart(button, false, false, 0)
 	}
-	mainBox.PackStart(button, false, false, 0)
 
 	mainBox.ShowAll()
 }
@@ -282,6 +292,20 @@ func main() {
 		os.Exit(0)
 	}
 	defer lockFile.Close()
+
+	if !*noLauncher && *launcherCmd == "" {
+		if isCommand("nwg-drawer") {
+			*launcherCmd = "nwg-drawer"
+		} else if isCommand("nwggrid") {
+			*launcherCmd = "nwggrid -p"
+		}
+
+		if *launcherCmd != "" {
+			println(fmt.Sprintf("Using auto-detected launcher command: '%s'", *launcherCmd))
+		} else {
+			println("Neither 'nwg-drawer' nor 'nwggrid' command found, and no other launcher specified; hiding the launcher button.")
+		}
+	}
 
 	configDirectory = configDir()
 	// if doesn't exist:
