@@ -938,3 +938,18 @@ func listMonitors() ([]gdk.Monitor, error) {
 	}
 	return monitors, nil
 }
+
+// Returns output of a CLI command with optional arguments
+func getCommandOutput(command string) string {
+	out, err := exec.Command("sh", "-c", command).Output()
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(out))
+}
+
+func isCommand(command string) bool {
+	cmd := strings.Fields(command)[0]
+	return getCommandOutput(fmt.Sprintf("command -v %s ", cmd)) != ""
+}
