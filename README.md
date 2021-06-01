@@ -1,6 +1,6 @@
 # nwg-dock
 
-This application is a part of the [nwg-shell](https://github.com/nwg-piotr/nwg-shell) project.
+This program is a part of the [nwg-shell](https://github.com/nwg-piotr/nwg-shell) project.
 
 Fully configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at [sway](https://github.com/swaywm/sway) Wayland compositor. It features pinned buttons, task buttons, the workspace switcher and the launcher button. The latter by default starts `nwggrid` (application grid) from [nwg-launchers](https://github.com/nwg-piotr/nwg-launchers). In the picture(s) below the dock has been shown together with [nwg-panel](https://github.com/nwg-piotr/nwg-panel).
 
