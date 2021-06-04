@@ -23,6 +23,7 @@ const version = "0.1.4"
 
 var (
 	appDirs                            []string
+	dataHome                           string
 	configDirectory                    string
 	pinnedFile                         string
 	pinned                             []string
@@ -139,7 +140,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	if !*noWs {
 		wsButton, _ := gtk.ButtonNew()
-		wsImage, err := createImage(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum), imgSizeScaled)
+		wsImage, err := createImage(fmt.Sprintf("%snwg-dock/images/%v.svg", dataHome, currentWsNum), imgSizeScaled)
 		if err == nil {
 			wsButton.SetImage(wsImage)
 			wsButton.SetAlwaysShowImage(true)
@@ -159,8 +160,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					} else {
 						targetWsNum = 1
 					}
-					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
-						targetWsNum), imgSizeScaled, imgSizeScaled)
+					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/%v.svg",
+						dataHome, targetWsNum), imgSizeScaled, imgSizeScaled)
 					wsImage.SetFromPixbuf(pixbuf)
 
 					return true
@@ -170,8 +171,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					} else {
 						targetWsNum = *numWS
 					}
-					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg",
-						targetWsNum), imgSizeScaled, imgSizeScaled)
+					pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/%v.svg",
+						dataHome, targetWsNum), imgSizeScaled, imgSizeScaled)
 					wsImage.SetFromPixbuf(pixbuf)
 
 					return true
@@ -184,7 +185,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	if !*noLauncher && *launcherCmd != "" {
 		button, _ := gtk.ButtonNew()
-		image, err := createImage("/usr/share/nwg-dock/images/grid.svg", imgSizeScaled)
+		image, err := createImage(fmt.Sprintf("%snwg-dock/images/grid.svg", dataHome), imgSizeScaled)
 		if err == nil {
 			button.SetImage(image)
 			button.SetAlwaysShowImage(true)
@@ -310,12 +311,13 @@ func main() {
 		}
 	}
 
+	dataHome = getDataHome()
 	configDirectory = configDir()
 	// if doesn't exist:
 	createDir(configDirectory)
 
 	if !pathExists(fmt.Sprintf("%s/style.css", configDirectory)) {
-		copyFile("/usr/share/nwg-dock/style.css", fmt.Sprintf("%s/style.css", configDirectory))
+		copyFile(fmt.Sprintf("%snwg-dock/style.css", dataHome), fmt.Sprintf("%s/style.css", configDirectory))
 	}
 
 	cacheDirectory := cacheDir()
@@ -324,6 +326,7 @@ func main() {
 	}
 	pinnedFile = filepath.Join(cacheDirectory, "nwg-dock-pinned")
 	cssFile := filepath.Join(configDirectory, *cssFileName)
+
 	appDirs = getAppDirs()
 
 	gtk.Init(nil)
@@ -474,7 +477,7 @@ func main() {
 		win.Hide()
 
 		mRefProvider, _ := gtk.CssProviderNew()
-		if err := mRefProvider.LoadFromPath("/usr/share/nwg-dock/hotspot.css"); err != nil {
+		if err := mRefProvider.LoadFromPath(fmt.Sprintf("%snwg-dock/hotspot.css", dataHome)); err != nil {
 			println(err)
 		}
 

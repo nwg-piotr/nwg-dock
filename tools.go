@@ -158,7 +158,8 @@ func pinnedButton(ID string) *gtk.Box {
 
 	image, err := createImage(ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/icon-missing.svg", imgSizeScaled, imgSizeScaled)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/icon-missing.svg", dataHome),
+			imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -170,7 +171,8 @@ func pinnedButton(ID string) *gtk.Box {
 	button.SetImagePosition(gtk.POS_TOP)
 	button.SetAlwaysShowImage(true)
 	button.SetTooltipText(getName(ID))
-	pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/task-empty.svg", imgSizeScaled, imgSizeScaled/8)
+	pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/task-empty.svg", dataHome),
+		imgSizeScaled, imgSizeScaled/8)
 	img, _ := gtk.ImageNewFromPixbuf(pixbuf)
 	box.PackStart(img, false, false, 0)
 
@@ -228,7 +230,8 @@ func taskButton(t task, instances []task) *gtk.Box {
 
 	image, err := createImage(t.ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/icon-missing.svg", imgSizeScaled, imgSizeScaled)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/icon-missing.svg", dataHome),
+			imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -242,10 +245,12 @@ func taskButton(t task, instances []task) *gtk.Box {
 	button.SetTooltipText(getName(t.ID))
 	var img *gtk.Image
 	if len(instances) < 2 {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/task-single.svg", imgSizeScaled, imgSizeScaled/8)
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/task-single.svg", dataHome),
+			imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	} else {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize("/usr/share/nwg-dock/images/task-multiple.svg", imgSizeScaled, imgSizeScaled/8)
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/task-multiple.svg", dataHome),
+			imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	}
 	box.PackStart(img, false, false, 0)
@@ -527,6 +532,13 @@ func copyFile(src, dst string) error {
 		return err
 	}
 	return os.Chmod(dst, srcinfo.Mode())
+}
+
+func getDataHome() string {
+	if os.Getenv("XDG_DATA_HOME") != "" {
+		return os.Getenv("XDG_DATA_HOME")
+	}
+	return "/usr/share/"
 }
 
 func getAppDirs() []string {
