@@ -158,7 +158,7 @@ func pinnedButton(ID string) *gtk.Box {
 
 	image, err := createImage(ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/icon-missing.svg", dataHome),
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg"),
 			imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
@@ -171,7 +171,7 @@ func pinnedButton(ID string) *gtk.Box {
 	button.SetImagePosition(gtk.POS_TOP)
 	button.SetAlwaysShowImage(true)
 	button.SetTooltipText(getName(ID))
-	pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/task-empty.svg", dataHome),
+	pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-empty.svg"),
 		imgSizeScaled, imgSizeScaled/8)
 	img, _ := gtk.ImageNewFromPixbuf(pixbuf)
 	box.PackStart(img, false, false, 0)
@@ -230,7 +230,7 @@ func taskButton(t task, instances []task) *gtk.Box {
 
 	image, err := createImage(t.ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/icon-missing.svg", dataHome),
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg"),
 			imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
@@ -245,11 +245,11 @@ func taskButton(t task, instances []task) *gtk.Box {
 	button.SetTooltipText(getName(t.ID))
 	var img *gtk.Image
 	if len(instances) < 2 {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/task-single.svg", dataHome),
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-single.svg"),
 			imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	} else {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize(fmt.Sprintf("%snwg-dock/images/task-multiple.svg", dataHome),
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-multiple.svg"),
 			imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	}
@@ -607,7 +607,7 @@ func getIcon(appName string) (string, error) {
 			}
 		}
 	}
-	return "", errors.New("Couldn't find the icon")
+	return "", errors.New("couldn't find the icon")
 }
 
 func searchDesktopDirs(badAppID string) string {
@@ -804,9 +804,7 @@ func launch(ID string) {
 
 	if len(envVars) > 0 {
 		cmd.Env = os.Environ()
-		for _, envVar := range envVars {
-			cmd.Env = append(cmd.Env, envVar)
-		}
+		cmd.Env = append(cmd.Env, envVars...)
 	}
 
 	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], elements[1+cmdIdx:])
@@ -835,7 +833,7 @@ func focusCon(conID int64) {
 	client.RunCommand(ctx, cmd)
 
 	if *autohide {
-		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+		src = glib.TimeoutAdd(uint(1000), func() bool {
 			dockWindow.Hide()
 			return false
 		})
@@ -854,7 +852,7 @@ func focusWorkspace(num int64) {
 	client.RunCommand(ctx, cmd)
 
 	if *autohide {
-		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+		src = glib.TimeoutAdd(uint(1000), func() bool {
 			dockWindow.Hide()
 			return false
 		})
@@ -873,7 +871,7 @@ func killCon(conID int64) {
 	client.RunCommand(ctx, cmd)
 
 	if *autohide {
-		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+		src = glib.TimeoutAdd(uint(1000), func() bool {
 			dockWindow.Hide()
 			return false
 		})
@@ -893,7 +891,7 @@ func con2WS(conID int64, wsNum int) {
 	refresh = true
 
 	if *autohide {
-		src, _ = glib.TimeoutAdd(uint(1000), func() bool {
+		src = glib.TimeoutAdd(uint(1000), func() bool {
 			dockWindow.Hide()
 			return false
 		})
