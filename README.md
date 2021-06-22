@@ -8,6 +8,8 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 [more pictures](https://scrot.cloud/album/nwg-dock.BuZM)
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/nwg-dock.svg)](https://repology.org/project/nwg-dock/versions)
+
 ## Installation
 
 ### Requirements
