@@ -357,7 +357,7 @@ func main() {
 		if err == nil {
 			layershell.SetMonitor(win, output2mon[*targetOutput])
 		} else {
-			println(err)
+			println(fmt.Sprintf("%s", err))
 		}
 	}
 
@@ -478,7 +478,7 @@ func main() {
 
 		mRefProvider, _ := gtk.CssProviderNew()
 		if err := mRefProvider.LoadFromPath(filepath.Join(dataHome, "nwg-dock/hotspot.css")); err != nil {
-			println(err)
+			println(fmt.Sprintf("%s", err))
 		}
 
 		if *targetOutput == "" {
