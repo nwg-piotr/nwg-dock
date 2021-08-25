@@ -776,47 +776,52 @@ func savePinned() {
 }
 
 func launch(ID string) {
-	e, err := getExec(ID)
+	command, err := getExec(ID)
 	if err != nil {
-		println(err)
+		println(fmt.Sprintf("%s", err))
 	}
 
-	elements := strings.Split(e, " ")
+	elements := strings.Split(command, " ")
 
 	// find prepended env variables, if any
-	envVarsNum := strings.Count(e, "=")
+	envVarsNum := strings.Count(command, "=")
 	var envVars []string
 
-	cmdIdx := 0
-	lastEnvVarIdx := 0
+	cmdIdx := -1
 
 	if envVarsNum > 0 {
 		for idx, item := range elements {
 			if strings.Contains(item, "=") {
-				lastEnvVarIdx = idx
 				envVars = append(envVars, item)
+			} else if !strings.HasPrefix(item, "-") && cmdIdx == -1 {
+				cmdIdx = idx
 			}
 		}
-		cmdIdx = lastEnvVarIdx + 1
+	}
+	if cmdIdx == -1 {
+		cmdIdx = 0
+	}
+	var args []string
+	for _, arg := range elements[1+cmdIdx:] {
+		if !strings.Contains(arg, "=") {
+			args = append(args, arg)
+		}
 	}
 
-	cmd := exec.Command(elements[cmdIdx], elements[1+cmdIdx:]...)
+	cmd := exec.Command(elements[cmdIdx], args...)
 
+	// set env variables
 	if len(envVars) > 0 {
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, envVars...)
 	}
 
-	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], elements[1+cmdIdx:])
+	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], args)
 	println(msg)
 
 	go cmd.Run()
 
 	if *autohide {
-		/*src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			dockWindow.Hide()
-			return false
-		})*/
 		dockWindow.Hide()
 	}
 }
