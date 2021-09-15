@@ -275,7 +275,7 @@ func main() {
 		for {
 			s := <-signalChan
 			if s == syscall.SIGTERM {
-				log.Println("SIGTERM received, bye bye!")
+				log.Info("SIGTERM received, bye bye!")
 				gtk.MainQuit()
 			}
 		}
@@ -291,10 +291,10 @@ func main() {
 			i, err := strconv.Atoi(pid)
 			if err == nil {
 				if !*autohide {
-					log.Println("Running instance found, sending SIGTERM and exiting...")
+					log.Info("Running instance found, sending SIGTERM and exiting...")
 					syscall.Kill(i, syscall.SIGTERM)
 				} else {
-					log.Println("Already running")
+					log.Info("Already running")
 				}
 			}
 		}
@@ -310,9 +310,9 @@ func main() {
 		}
 
 		if *launcherCmd != "" {
-			log.Println(fmt.Sprintf("Using auto-detected launcher command: '%s'", *launcherCmd))
+			log.Infof("Using auto-detected launcher command: '%s'", *launcherCmd)
 		} else {
-			log.Println("Neither 'nwg-drawer' nor 'nwggrid' command found, and no other launcher specified; hiding the launcher button.")
+			log.Info("Neither 'nwg-drawer' nor 'nwggrid' command found, and no other launcher specified; hiding the launcher button.")
 		}
 	}
 
