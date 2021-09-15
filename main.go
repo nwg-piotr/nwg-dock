@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -11,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/allan-simon/go-singleinstance"
 	"github.com/dlasky/gotk3-layershell/layershell"
@@ -57,6 +58,7 @@ var marginRight = flag.Int("mr", 0, "Margin Right")
 var marginBottom = flag.Int("mb", 0, "Margin Bottom")
 var noWs = flag.Bool("nows", false, "don't show the workspace switcher")
 var noLauncher = flag.Bool("nolauncher", false, "don't show the launcher button")
+var debug = flag.Bool("debug", false, "turn on debug messages")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
 	mainBox.Destroy()
@@ -257,6 +259,9 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 
 func main() {
 	flag.Parse()
+	if *debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	if *displayVersion {
 		fmt.Printf("nwg-dock version %s\n", version)
@@ -270,7 +275,7 @@ func main() {
 		for {
 			s := <-signalChan
 			if s == syscall.SIGTERM {
-				println("SIGTERM received, bye bye!")
+				log.Println("SIGTERM received, bye bye!")
 				gtk.MainQuit()
 			}
 		}
@@ -286,10 +291,10 @@ func main() {
 			i, err := strconv.Atoi(pid)
 			if err == nil {
 				if !*autohide {
-					println("Running instance found, sending SIGTERM and exiting...")
+					log.Println("Running instance found, sending SIGTERM and exiting...")
 					syscall.Kill(i, syscall.SIGTERM)
 				} else {
-					println("Already running")
+					log.Println("Already running")
 				}
 			}
 		}
@@ -305,9 +310,9 @@ func main() {
 		}
 
 		if *launcherCmd != "" {
-			println(fmt.Sprintf("Using auto-detected launcher command: '%s'", *launcherCmd))
+			log.Println(fmt.Sprintf("Using auto-detected launcher command: '%s'", *launcherCmd))
 		} else {
-			println("Neither 'nwg-drawer' nor 'nwggrid' command found, and no other launcher specified; hiding the launcher button.")
+			log.Println("Neither 'nwg-drawer' nor 'nwggrid' command found, and no other launcher specified; hiding the launcher button.")
 		}
 	}
 
@@ -335,9 +340,9 @@ func main() {
 
 	err = cssProvider.LoadFromPath(cssFile)
 	if err != nil {
-		fmt.Printf("%s file not found, using GTK styling\n", cssFile)
+		log.Warnf("%s file not found, using GTK styling\n", cssFile)
 	} else {
-		fmt.Printf("Using style: %s\n", cssFile)
+		log.Printf("Using style: %s\n", cssFile)
 		screen, _ := gdk.ScreenGetDefault()
 		gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 	}
@@ -357,7 +362,7 @@ func main() {
 		if err == nil {
 			layershell.SetMonitor(win, output2mon[*targetOutput])
 		} else {
-			println(fmt.Sprintf("%s", err))
+			log.Warn(fmt.Sprintf("%s", err))
 		}
 	}
 
@@ -461,7 +466,7 @@ func main() {
 	glib.TimeoutAdd(uint(150), func() bool {
 		currentTasks, _ := listTasks()
 		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-			println("refreshing...")
+			log.Debug("refreshing...")
 			buildMainBox(currentTasks, alignmentBox)
 			oldTasks = currentTasks
 			oldWsNum = currentWsNum
@@ -478,7 +483,7 @@ func main() {
 
 		mRefProvider, _ := gtk.CssProviderNew()
 		if err := mRefProvider.LoadFromPath(filepath.Join(dataHome, "nwg-dock/hotspot.css")); err != nil {
-			println(fmt.Sprintf("%s", err))
+			log.Errorf("%s", err)
 		}
 
 		if *targetOutput == "" {

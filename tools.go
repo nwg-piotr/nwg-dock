@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
@@ -374,13 +375,13 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	if !inPinned(taskID) {
 		pinItem.SetLabel("Pin")
 		pinItem.Connect("activate", func() {
-			println("pin", taskID)
+			log.Infof("pin %s", taskID)
 			pinTask(taskID)
 		})
 	} else {
 		pinItem.SetLabel("Unpin")
 		pinItem.Connect("activate", func() {
-			println("unpin", taskID)
+			log.Infof("unpin %s", taskID)
 			unpinTask(taskID)
 		})
 	}
@@ -426,7 +427,7 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
 	if strings.HasPrefix(icon, "/") {
 		pixbuf, err := gdk.PixbufNewFromFileAtSize(icon, size, size)
 		if err != nil {
-			println(fmt.Sprintf("%s", err))
+			log.Errorf("%s", err)
 			return nil, err
 		}
 		return pixbuf, nil
@@ -502,13 +503,13 @@ func createDir(dir string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err == nil {
-			fmt.Println("Creating dir:", dir)
+			log.Infof("Creating dir: %s", dir)
 		}
 	}
 }
 
 func copyFile(src, dst string) error {
-	fmt.Println("Copying file:", dst)
+	log.Infof("Copying file: %s", dst)
 
 	var err error
 	var srcfd *os.File
@@ -768,17 +769,16 @@ func savePinned() {
 			_, err := f.WriteString(line + "\n")
 
 			if err != nil {
-				println("Error saving pinned", err)
+				log.Errorf("Error saving pinned", err)
 			}
 		}
-
 	}
 }
 
 func launch(ID string) {
 	command, err := getExec(ID)
 	if err != nil {
-		println(fmt.Sprintf("%s", err))
+		log.Errorf("%s", err)
 	}
 
 	elements := strings.Split(command, " ")
@@ -817,7 +817,7 @@ func launch(ID string) {
 	}
 
 	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], args)
-	println(msg)
+	log.Info(msg)
 
 	go cmd.Run()
 
