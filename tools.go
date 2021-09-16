@@ -299,7 +299,10 @@ func taskButton(t task, instances []task) *gtk.Box {
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
 
-	iconName, _ := getIcon(taskID)
+	iconName, err := getIcon(taskID)
+	if err != nil {
+		log.Warn(err)
+	}
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
@@ -327,7 +330,10 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
 	//menu.SetReserveToggleSize(false)
 
-	iconName, _ := getIcon(taskID)
+	iconName, err := getIcon(taskID)
+	if err != nil {
+		log.Warnf("%s %s", err, taskID)
+	}
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
@@ -582,6 +588,9 @@ func isIn(slice []string, val string) bool {
 }
 
 func getIcon(appName string) (string, error) {
+	if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
+		return "gimp", nil
+	}
 	p := ""
 	for _, d := range appDirs {
 		path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
