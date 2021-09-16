@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
@@ -199,7 +200,6 @@ func pinnedButton(ID string) *gtk.Box {
 
 func pinnedMenuContext(taskID string) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	// menu.SetReserveToggleSize(false)
 	menuItem, _ := gtk.MenuItemNewWithLabel("Unpin")
 	menuItem.Connect("activate", func() {
 		unpinTask(taskID)
@@ -298,7 +298,10 @@ func taskButton(t task, instances []task) *gtk.Box {
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
 
-	iconName, _ := getIcon(taskID)
+	iconName, err := getIcon(taskID)
+	if err != nil {
+		log.Warn(err)
+	}
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
@@ -324,13 +327,14 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 
 func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	//menu.SetReserveToggleSize(false)
 
-	iconName, _ := getIcon(taskID)
+	iconName, err := getIcon(taskID)
+	if err != nil {
+		log.Warnf("%s %s", err, taskID)
+	}
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
-		//image, _ := gtk.ImageNewFromIconName("window-close", gtk.ICON_SIZE_MENU)
 		image, _ := gtk.ImageNewFromIconName(iconName, gtk.ICON_SIZE_MENU)
 		hbox.PackStart(image, false, false, 0)
 		title := instance.Name
@@ -374,13 +378,13 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	if !inPinned(taskID) {
 		pinItem.SetLabel("Pin")
 		pinItem.Connect("activate", func() {
-			println("pin", taskID)
+			log.Infof("pin %s", taskID)
 			pinTask(taskID)
 		})
 	} else {
 		pinItem.SetLabel("Unpin")
 		pinItem.Connect("activate", func() {
-			println("unpin", taskID)
+			log.Infof("unpin %s", taskID)
 			unpinTask(taskID)
 		})
 	}
@@ -426,7 +430,7 @@ func createPixbuf(icon string, size int) (*gdk.Pixbuf, error) {
 	if strings.HasPrefix(icon, "/") {
 		pixbuf, err := gdk.PixbufNewFromFileAtSize(icon, size, size)
 		if err != nil {
-			println(fmt.Sprintf("%s", err))
+			log.Errorf("%s", err)
 			return nil, err
 		}
 		return pixbuf, nil
@@ -502,13 +506,13 @@ func createDir(dir string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err == nil {
-			fmt.Println("Creating dir:", dir)
+			log.Infof("Creating dir: %s", dir)
 		}
 	}
 }
 
 func copyFile(src, dst string) error {
-	fmt.Println("Copying file:", dst)
+	log.Infof("Copying file: %s", dst)
 
 	var err error
 	var srcfd *os.File
@@ -581,6 +585,9 @@ func isIn(slice []string, val string) bool {
 }
 
 func getIcon(appName string) (string, error) {
+	if strings.HasPrefix(strings.ToUpper(appName), "GIMP") {
+		return "gimp", nil
+	}
 	p := ""
 	for _, d := range appDirs {
 		path := filepath.Join(d, fmt.Sprintf("%s.desktop", appName))
@@ -768,55 +775,63 @@ func savePinned() {
 			_, err := f.WriteString(line + "\n")
 
 			if err != nil {
-				println("Error saving pinned", err)
+				log.Errorf("Error saving pinned", err)
 			}
 		}
-
 	}
 }
 
 func launch(ID string) {
-	e, err := getExec(ID)
+	command, err := getExec(ID)
 	if err != nil {
-		println(err)
+		log.Errorf("%s", err)
+	}
+	// remove quotation marks if any
+	if strings.Contains(command, "\"") {
+		command = strings.ReplaceAll(command, "\"", "")
 	}
 
-	elements := strings.Split(e, " ")
+	elements := strings.Split(command, " ")
 
 	// find prepended env variables, if any
-	envVarsNum := strings.Count(e, "=")
+	envVarsNum := strings.Count(command, "=")
 	var envVars []string
 
-	cmdIdx := 0
-	lastEnvVarIdx := 0
+	cmdIdx := -1
 
 	if envVarsNum > 0 {
 		for idx, item := range elements {
 			if strings.Contains(item, "=") {
-				lastEnvVarIdx = idx
 				envVars = append(envVars, item)
+			} else if !strings.HasPrefix(item, "-") && cmdIdx == -1 {
+				cmdIdx = idx
 			}
 		}
-		cmdIdx = lastEnvVarIdx + 1
+	}
+	if cmdIdx == -1 {
+		cmdIdx = 0
+	}
+	var args []string
+	for _, arg := range elements[1+cmdIdx:] {
+		if !strings.Contains(arg, "=") {
+			args = append(args, arg)
+		}
 	}
 
 	cmd := exec.Command(elements[cmdIdx], elements[1+cmdIdx:]...)
 
+	// set env variables
 	if len(envVars) > 0 {
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, envVars...)
 	}
 
-	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], elements[1+cmdIdx:])
-	println(msg)
+	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], args)
+	log.Info(msg)
 
-	go cmd.Run()
+	cmd.Start()
 
 	if *autohide {
-		/*src, _ = glib.TimeoutAdd(uint(1000), func() bool {
-			dockWindow.Hide()
-			return false
-		})*/
 		dockWindow.Hide()
 	}
 }
