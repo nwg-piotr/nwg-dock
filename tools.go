@@ -817,7 +817,7 @@ func launch(ID string) {
 		}
 	}
 
-	cmd := exec.Command(elements[cmdIdx], args...)
+	cmd := exec.Command(elements[cmdIdx], elements[1+cmdIdx:]...)
 
 	// set env variables
 	if len(envVars) > 0 {
