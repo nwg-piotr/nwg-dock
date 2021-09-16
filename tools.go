@@ -200,7 +200,6 @@ func pinnedButton(ID string) *gtk.Box {
 
 func pinnedMenuContext(taskID string) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	// menu.SetReserveToggleSize(false)
 	menuItem, _ := gtk.MenuItemNewWithLabel("Unpin")
 	menuItem.Connect("activate", func() {
 		unpinTask(taskID)
@@ -328,7 +327,6 @@ func taskMenu(taskID string, instances []task) gtk.Menu {
 
 func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
-	//menu.SetReserveToggleSize(false)
 
 	iconName, err := getIcon(taskID)
 	if err != nil {
@@ -337,7 +335,6 @@ func taskMenuContext(taskID string, instances []task) gtk.Menu {
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
-		//image, _ := gtk.ImageNewFromIconName("window-close", gtk.ICON_SIZE_MENU)
 		image, _ := gtk.ImageNewFromIconName(iconName, gtk.ICON_SIZE_MENU)
 		hbox.PackStart(image, false, false, 0)
 		title := instance.Name
@@ -789,7 +786,7 @@ func launch(ID string) {
 	if err != nil {
 		log.Errorf("%s", err)
 	}
-	// remove quitation maks if any
+	// remove quotation marks if any
 	if strings.Contains(command, "\"") {
 		command = strings.ReplaceAll(command, "\"", "")
 	}
