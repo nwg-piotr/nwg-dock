@@ -789,6 +789,10 @@ func launch(ID string) {
 	if err != nil {
 		log.Errorf("%s", err)
 	}
+	// remove quitation maks if any
+	if strings.Contains(command, "\"") {
+		command = strings.ReplaceAll(command, "\"", "")
+	}
 
 	elements := strings.Split(command, " ")
 
@@ -828,7 +832,7 @@ func launch(ID string) {
 	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], args)
 	log.Info(msg)
 
-	go cmd.Run()
+	cmd.Start()
 
 	if *autohide {
 		dockWindow.Hide()
