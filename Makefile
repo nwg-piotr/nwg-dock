@@ -8,9 +8,11 @@ get:
 	go get "github.com/sirupsen/logrus"
 
 build:
-	go build -o bin/nwg-dock *.go
+	go build -o bin/nwg-dock .
 
 install:
+	-pkill -f nwg-dock
+	sleep 1
 	mkdir -p /usr/share/nwg-dock
 	cp -r images /usr/share/nwg-dock
 	cp config/* /usr/share/nwg-dock
@@ -21,4 +23,4 @@ uninstall:
 	rm /usr/bin/nwg-dock
 
 run:
-	go run *.go
+	go run .

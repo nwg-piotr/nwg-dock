@@ -20,7 +20,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-const version = "0.1.6"
+const version = "0.2.0"
 
 var (
 	appDirs                            []string
@@ -36,7 +36,9 @@ var (
 	widgetAnchor, menuAnchor           gdk.Gravity
 	imgSizeScaled                      int
 	currentWsNum, targetWsNum          int64
-	dockWindow                         *gtk.Window
+	win                                *gtk.Window
+	showWindowTrigger                  bool
+	hideWindowTrigger                  bool
 )
 
 // Flags
@@ -58,6 +60,7 @@ var marginRight = flag.Int("mr", 0, "Margin Right")
 var marginBottom = flag.Int("mb", 0, "Margin Bottom")
 var noWs = flag.Bool("nows", false, "don't show the workspace switcher")
 var noLauncher = flag.Bool("nolauncher", false, "don't show the launcher button")
+var resident = flag.Bool("r", false, "Leave the program resident, but w/o hotspot")
 var debug = flag.Bool("debug", false, "turn on debug messages")
 
 func buildMainBox(tasks []task, vbox *gtk.Box) {
@@ -197,7 +200,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 				cmd := exec.Command(elements[0], elements[1:]...)
 				go cmd.Run()
 				if *autohide {
-					dockWindow.Hide()
+					win.Hide()
 				}
 			})
 			button.Connect("enter-notify-event", cancelClose)
@@ -263,26 +266,58 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	if *autohide && *resident {
+		log.Warn("autohiDe and Resident arguments are mutually exclusive, ignoring -d!")
+		*autohide = false
+	}
+
 	if *displayVersion {
 		fmt.Printf("nwg-dock version %s\n", version)
 		os.Exit(0)
 	}
+	if *autohide {
+		log.Info("Starting in autohiDe mode")
+	}
+	if *resident {
+		log.Info("Starting in resident mode")
+	}
 
 	// Gentle SIGTERM handler thanks to reiki4040 https://gist.github.com/reiki4040/be3705f307d3cd136e85
+	// v0.2: we also need to support SIGUSR from now on.
 	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGTERM)
+	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGUSR1)
+
 	go func() {
 		for {
 			s := <-signalChan
-			if s == syscall.SIGTERM {
+			switch s {
+			case syscall.SIGTERM:
 				log.Info("SIGTERM received, bye bye!")
 				gtk.MainQuit()
+			case syscall.SIGUSR1:
+				if *resident || *autohide {
+					// As win.Show() called from inside a goroutine randomly crashes GTK,
+					// let's just set e helper variable here. We'll be checking it with glib.TimeoutAdd.
+					if !win.IsVisible() {
+						log.Debug("SIGUSR1 received, showing the window")
+						showWindowTrigger = true
+					} else {
+						log.Debug("SIGUSR1 received, hiding the window")
+						hideWindowTrigger = true
+					}
+				} else {
+					log.Info("SIGUSR1 received, and I'm not resident, bye bye!")
+					gtk.MainQuit()
+				}
+			default:
+				log.Warn("Unknown signal")
 			}
 		}
 	}()
 
-	// Unless we are in autohide mode, we probably want the same key/mouse binding to turn the dock off.
-	// Kill the running instance and exit.
+	// Unless we are in autohide/resident mode, we probably want the same key/mouse binding to turn the dock off.
+	// Since v0.2 we can't just send SIGKILL if running instance found. We'll send SIGUSR1 instead.
+	// If it's running with `-r` or `-d` flag, it'll show the window. If not - it will die.
 	lockFilePath := fmt.Sprintf("%s/nwg-dock.lock", tempDir())
 	lockFile, err := singleinstance.CreateLockFile(lockFilePath)
 	if err != nil {
@@ -290,11 +325,11 @@ func main() {
 		if err == nil {
 			i, err := strconv.Atoi(pid)
 			if err == nil {
-				if !*autohide {
-					log.Info("Running instance found, sending SIGTERM and exiting...")
-					syscall.Kill(i, syscall.SIGTERM)
+				if *autohide || *resident {
+					log.Info("Running instance found, terminating...")
 				} else {
-					log.Info("Already running")
+					syscall.Kill(i, syscall.SIGUSR1)
+					log.Info("Sending SIGUSR1 to running instance and bye, bye!")
 				}
 			}
 		}
@@ -347,11 +382,10 @@ func main() {
 		gtk.AddProviderForScreen(screen, cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 	}
 
-	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	win, err = gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	if err != nil {
 		log.Fatal("Unable to create window:", err)
 	}
-	dockWindow = win
 
 	layershell.InitForWindow(win)
 
@@ -431,7 +465,7 @@ func main() {
 
 	// Close the window on leave, but not immediately, to avoid accidental closes
 	win.Connect("leave-notify-event", func() {
-		if *autohide {
+		if *autohide || *resident {
 			src = glib.TimeoutAdd(uint(1000), func() bool {
 				win.Hide()
 				src = 0
@@ -479,7 +513,7 @@ func main() {
 	win.ShowAll()
 
 	if *autohide {
-		win.Hide()
+		glib.TimeoutAdd(uint(500), win.Hide)
 
 		mRefProvider, _ := gtk.CssProviderNew()
 		if err := mRefProvider.LoadFromPath(filepath.Join(dataHome, "nwg-dock/hotspot.css")); err != nil {
@@ -508,6 +542,23 @@ func main() {
 			win.ShowAll()
 		}
 	}
+
+	if *resident {
+		glib.TimeoutAdd(uint(500), win.Hide)
+	}
+
+	glib.TimeoutAdd(uint(1), func() bool {
+		if showWindowTrigger && win != nil && !win.IsVisible() {
+			win.ShowAll()
+			showWindowTrigger = false
+		}
+		if hideWindowTrigger && win != nil && win.IsVisible() {
+			win.Hide()
+			hideWindowTrigger = false
+		}
+
+		return true
+	})
 
 	gtk.Main()
 }
