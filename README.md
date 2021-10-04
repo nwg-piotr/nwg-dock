@@ -57,13 +57,15 @@ exec_always nwg-dock -r
 
 ### `-d` for autohiDe
 
-Move the mouse pointer to expected dock location for the dock to show up. It will be hidden a second after you leave the window. Invisible hot spots to activate the dock will be created on all your outputs, unless you
-specify one with the `-o` argument.
+Move the mouse pointer to expected dock location for the dock to show up. It will be hidden a second after you leave the window. Invisible hot spots will be created on all your outputs, unless you specify one with the `-o` argument.
 
 ### `-r` for just Resident
 
-No hotspot will be created. To show the dock, just bind the `exec nwg-dock` command to some key. How about the
+No hotspot will be created. To show the dock, bind the `exec nwg-dock` command to some key or button. How about the
 `Menu` key, which is usually useless? This also works in autohiDe mode.
+
+Re-execution of the same command hides the dock. If a resident instance found, the `nwg-dock` command w/o
+arguments sends `SIGUSR1` to the resident instance. Actually `pkill -USR1 nwg-dock` could be used instead.
 
 Re-execution of the command with the `-d` or `-r` argument won't kill the running instance. If the dock is
 running residently, another instance will just exit with 0 code. In case you'd like to terminate it anyway, you need to `pkill -f nwg-dock`.
