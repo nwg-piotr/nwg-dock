@@ -62,15 +62,17 @@ Move the mouse pointer to expected dock location for the dock to show up. It wil
 ### `-r` for just Resident
 
 No hotspot will be created. To show the dock, bind the `exec nwg-dock` command to some key or button. How about the
-`Menu` key, which is usually useless? This also works in autohiDe mode.
+`Menu` key, which is usually useless?
 
 Re-execution of the same command hides the dock. If a resident instance found, the `nwg-dock` command w/o
-arguments sends `SIGUSR1` to the resident instance. Actually `pkill -USR1 nwg-dock` could be used instead.
+arguments sends `SIGUSR1` to it. Actually `pkill -USR1 nwg-dock` could be used instead. This also works in autohiDe
+mode.
 
 Re-execution of the command with the `-d` or `-r` argument won't kill the running instance. If the dock is
 running residently, another instance will just exit with 0 code. In case you'd like to terminate it anyway, you need to `pkill -f nwg-dock`.
 
-*NOTE: you must do it before reloading sway if you've just changed the arguments you auto-start the dock with.*
+*NOTE: you need to kill the running instance before reloading sway, if you've just changed the arguments you
+auto-start the dock with.*
 
 ```txt
 nwg-dock -h
