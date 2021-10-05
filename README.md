@@ -4,7 +4,7 @@ This program is a part of the [nwg-shell](https://github.com/nwg-piotr/nwg-shell
 
 Fully configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at [sway](https://github.com/swaywm/sway) Wayland compositor. It features pinned buttons, task buttons, the workspace switcher and the launcher button. The latter by default starts [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or `nwggrid` (application grid) - if found. In the picture(s) below the dock has been shown together with [nwg-panel](https://github.com/nwg-piotr/nwg-panel).
 
-![06.png](https://scrot.cloud/images/2021/04/02/06.png)
+![v020.png](https://scrot.cloud/images/2021/10/06/v020.png)
 
 [more pictures](https://scrot.cloud/album/nwg-dock.BuZM)
 
@@ -38,7 +38,7 @@ Either start the dock permanently in the sway config file,
 exec nwg-dock [arguments]
 ```
 
-or assign the command to some key binding. Running the command again kills existing program instance, so that
+or assign the command to some key binding. Running the command again kills the existing program instance, so that
 you could use the same key to open and close the dock.
 
 ## Running the dock residently
