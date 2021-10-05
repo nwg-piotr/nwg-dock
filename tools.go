@@ -832,7 +832,7 @@ func launch(ID string) {
 	cmd.Start()
 
 	if *autohide {
-		dockWindow.Hide()
+		win.Hide()
 	}
 }
 
@@ -849,7 +849,7 @@ func focusCon(conID int64) {
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
-			dockWindow.Hide()
+			win.Hide()
 			return false
 		})
 	}
@@ -868,7 +868,7 @@ func focusWorkspace(num int64) {
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
-			dockWindow.Hide()
+			win.Hide()
 			return false
 		})
 	}
@@ -887,7 +887,7 @@ func killCon(conID int64) {
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
-			dockWindow.Hide()
+			win.Hide()
 			return false
 		})
 	}
@@ -907,7 +907,7 @@ func con2WS(conID int64, wsNum int) {
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
-			dockWindow.Hide()
+			win.Hide()
 			return false
 		})
 	}

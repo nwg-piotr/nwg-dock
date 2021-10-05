@@ -4,7 +4,7 @@ This program is a part of the [nwg-shell](https://github.com/nwg-piotr/nwg-shell
 
 Fully configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at [sway](https://github.com/swaywm/sway) Wayland compositor. It features pinned buttons, task buttons, the workspace switcher and the launcher button. The latter by default starts [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or `nwggrid` (application grid) - if found. In the picture(s) below the dock has been shown together with [nwg-panel](https://github.com/nwg-piotr/nwg-panel).
 
-![06.png](https://scrot.cloud/images/2021/04/02/06.png)
+![v020.png](https://scrot.cloud/images/2021/10/06/v020.png)
 
 [more pictures](https://scrot.cloud/album/nwg-dock.BuZM)
 
@@ -38,32 +38,52 @@ Either start the dock permanently in the sway config file,
 exec nwg-dock [arguments]
 ```
 
-or assign the command to some key binding. Running the command again kills existing program instance, so that
+or assign the command to some key binding. Running the command again kills the existing program instance, so that
 you could use the same key to open and close the dock.
 
-## Running in autohiDe mode
+## Running the dock residently
 
-If you run the program with the `-d` argument, it will start up hidden. Move the mouse pointer to expected dock
- location for the dock to show up. It will be hidden a second after you leave the window or use a button. Invisible
- hot spots to activate the dock will be created on all your outputs, unless you specify one with the `-o` argument.
-
-As the dock in autohide mode is expected to be started from the sway config with
+If you run the program with the `-d` or `-r` argument (preferably in autostart), it will start up hidden.
 
 ```text
 exec_always nwg-dock -d
 ```
 
-...re-execution of the command with the `-d` argument won't kill the running instance. If the dock is already
- running, another instance will exit with 0 code. In case you'd like to terminate it anyway, just use the
- `nwg-dock` command with no argument.
+or
+
+```text
+exec_always nwg-dock -r
+```
+
+### `-d` for autohiDe
+
+Move the mouse pointer to expected dock location for the dock to show up. It will be hidden a second after you leave the window. Invisible hot spots will be created on all your outputs, unless you specify one with the `-o` argument.
+
+### `-r` for just Resident
+
+No hotspot will be created. To show/hide the dock, bind the `exec nwg-dock` command to some key or button.
+How about the `Menu` key, which is usually useless?
+
+Re-execution of the same command hides the dock. If a resident instance found, the `nwg-dock` command w/o
+arguments sends `SIGUSR1` to it. Actually `pkill -USR1 nwg-dock` could be used instead. This also works in autohiDe
+mode.
+
+Re-execution of the command with the `-d` or `-r` argument won't kill the running instance. If the dock is
+running residently, another instance will just exit with 0 code. In case you'd like to terminate it anyway, you need to `pkill -f nwg-dock`.
+
+*NOTE: you need to kill the running instance before reloading sway, if you've just changed the arguments you
+auto-start the dock with.*
 
 ```txt
+nwg-dock -h
 Usage of nwg-dock:
   -a string
     	Alignment in full width/height: "start", "center" or "end" (default "center")
   -c string
     	Command assigned to the launcher button
   -d	auto-hiDe: show dock when hotspot hovered, close when left or a button clicked
+  -debug
+    	turn on debug messages
   -f	take Full screen width/height
   -i int
     	Icon size (default 48)
@@ -78,13 +98,14 @@ Usage of nwg-dock:
   -mt int
     	Margin Top
   -nolauncher
-    	don't show launcher button switcher
+    	don't show the launcher button
   -nows
     	don't show the workspace switcher
   -o string
     	name of Output to display the dock on
   -p string
     	Position: "bottom", "top" or "left" (default "bottom")
+  -r	Leave the program resident, but w/o hotspot
   -s string
     	Styling: css file name (default "style.css")
   -v	display Version information
