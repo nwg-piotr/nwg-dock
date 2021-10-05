@@ -61,8 +61,8 @@ Move the mouse pointer to expected dock location for the dock to show up. It wil
 
 ### `-r` for just Resident
 
-No hotspot will be created. To show the dock, bind the `exec nwg-dock` command to some key or button. How about the
-`Menu` key, which is usually useless?
+No hotspot will be created. To show/hide the dock, bind the `exec nwg-dock` command to some key or button.
+How about the `Menu` key, which is usually useless?
 
 Re-execution of the same command hides the dock. If a resident instance found, the `nwg-dock` command w/o
 arguments sends `SIGUSR1` to it. Actually `pkill -USR1 nwg-dock` could be used instead. This also works in autohiDe
