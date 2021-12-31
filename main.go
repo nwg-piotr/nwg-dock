@@ -20,7 +20,7 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
-const version = "0.2.0"
+const version = "0.2.1"
 
 var (
 	appDirs                            []string
@@ -465,7 +465,7 @@ func main() {
 
 	// Close the window on leave, but not immediately, to avoid accidental closes
 	win.Connect("leave-notify-event", func() {
-		if *autohide || *resident {
+		if *autohide {
 			src = glib.TimeoutAdd(uint(1000), func() bool {
 				win.Hide()
 				src = 0
@@ -541,10 +541,6 @@ func main() {
 
 			win.ShowAll()
 		}
-	}
-
-	if *resident {
-		glib.TimeoutAdd(uint(500), win.Hide)
 	}
 
 	glib.TimeoutAdd(uint(1), func() bool {

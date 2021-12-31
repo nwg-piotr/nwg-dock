@@ -43,7 +43,7 @@ you could use the same key to open and close the dock.
 
 ## Running the dock residently
 
-If you run the program with the `-d` or `-r` argument (preferably in autostart), it will start up hidden.
+If you run the program with the `-d` or `-r` argument (preferably in autostart), it will be running residently.
 
 ```text
 exec_always nwg-dock -d
