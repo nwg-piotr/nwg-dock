@@ -93,8 +93,13 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		}
 	}
 
+	divider := 1
+	if len(allItems) > 0 {
+		divider = len(allItems)
+	}
+
 	// scale icons down when their number increases
-	if *imgSize*6/(len(allItems)) < *imgSize {
+	if *imgSize*6/(divider) < *imgSize {
 		overflow := (len(allItems) - 6) / 3
 		imgSizeScaled = *imgSize * 6 / (6 + overflow)
 	} else {
