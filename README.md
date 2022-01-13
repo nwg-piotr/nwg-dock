@@ -28,8 +28,6 @@ or none at all. The launcher button won't show up, if so.
 3. `make build`
 4. `sudo make install`
 
-If your machine is x86_64, you may skip 2 and 3, and just install the provided binary with `sudo make install`.
-
 ## Running
 
 Either start the dock permanently in the sway config file,
