@@ -4,7 +4,7 @@ This program is a part of the [nwg-shell](https://github.com/nwg-piotr/nwg-shell
 
 Fully configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at [sway](https://github.com/swaywm/sway) Wayland compositor. It features pinned buttons, task buttons, the workspace switcher and the launcher button. The latter by default starts [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or `nwggrid` (application grid) - if found. In the picture(s) below the dock has been shown together with [nwg-panel](https://github.com/nwg-piotr/nwg-panel).
 
-![screenshot-1.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell/main/images/nwg-dock/dock-1.png)
+![screenshot-1.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-1.png)
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/nwg-dock.svg)](https://repology.org/project/nwg-dock/versions)
 
@@ -110,7 +110,7 @@ Usage of nwg-dock:
   -x	set eXclusive zone: move other windows aside; overrides the "-l" argument
 ```
 
-![screenshot-2.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell/main/images/nwg-dock/dock-2.png)
+![screenshot-2.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-2.png)
 
 ## Styling
 
