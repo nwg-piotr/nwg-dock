@@ -803,13 +803,13 @@ func pinTask(itemID string) {
 	}
 	pinned = append(pinned, itemID)
 	savePinned()
-	refresh = true
+	refreshMainBoxChannel <- struct{}{}
 }
 
 func unpinTask(itemID string) {
 	pinned = remove(pinned, itemID)
 	savePinned()
-	refresh = true
+	refreshMainBoxChannel <- struct{}{}
 }
 
 func remove(s []string, r string) []string {
@@ -888,7 +888,9 @@ func launch(ID string) {
 	msg := fmt.Sprintf("env vars: %s; command: '%s'; args: %s\n", envVars, elements[cmdIdx], args)
 	log.Info(msg)
 
-	cmd.Start()
+	if err := cmd.Start(); err != nil {
+		log.Error("Unable to launch command!", err.Error())
+	}
 
 	if *autohide {
 		win.Hide()
@@ -904,7 +906,9 @@ func focusCon(conID int64) {
 	if err != nil {
 		log.Panic(err)
 	}
-	client.RunCommand(ctx, cmd)
+	if _, err = client.RunCommand(ctx, cmd); err != nil {
+		log.Errorf("Unable to focus to con %v: %s", conID, err.Error())
+	}
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
@@ -923,7 +927,9 @@ func focusWorkspace(num int64) {
 	if err != nil {
 		log.Panic(err)
 	}
-	client.RunCommand(ctx, cmd)
+	if _, err = client.RunCommand(ctx, cmd); err != nil {
+		log.Errorf("Unable to focus to workspace %v: %s", num, err.Error())
+	}
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
@@ -942,7 +948,9 @@ func killCon(conID int64) {
 	if err != nil {
 		log.Panic(err)
 	}
-	client.RunCommand(ctx, cmd)
+	if _, err = client.RunCommand(ctx, cmd); err != nil {
+		log.Errorf("Unable to kill con %v: %s", conID, err.Error())
+	}
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {
@@ -961,8 +969,12 @@ func con2WS(conID int64, wsNum int) {
 	if err != nil {
 		log.Panic(err)
 	}
-	client.RunCommand(ctx, cmd)
-	refresh = true
+
+	if _, err = client.RunCommand(ctx, cmd); err != nil {
+		log.Errorf("Unable to move to workspace %v: %s", wsNum, err.Error())
+	}
+
+	refreshMainBoxChannel <- struct{}{}
 
 	if *autohide {
 		src = glib.TimeoutAdd(uint(1000), func() bool {

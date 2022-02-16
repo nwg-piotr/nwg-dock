@@ -38,7 +38,7 @@ var (
 	oldTasks                           []task
 	mainBox                            *gtk.Box
 	src                                glib.SourceHandle
-	refresh                            bool // we will use this to trigger rebuilding mainBox
+	refreshMainBoxChannel              chan struct{} = make(chan struct{}, 1)
 	outerOrientation, innerOrientation gtk.Orientation
 	widgetAnchor, menuAnchor           gdk.Gravity
 	imgSizeScaled                      int
@@ -515,6 +515,19 @@ func main() {
 
 	buildMainBox(tasks, alignmentBox)
 
+	refreshMainBox := func(currentTasks []task) {
+		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum {
+			glib.TimeoutAdd(0, func() bool {
+				log.Debug("refreshing...")
+				buildMainBox(currentTasks, alignmentBox)
+				oldTasks = currentTasks
+				oldWsNum = currentWsNum
+				targetWsNum = currentWsNum
+				return false
+			})
+		}
+	}
+
 	go func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -524,19 +537,22 @@ func main() {
 			log.Fatal("Unable to process sway tasks:", err)
 		}
 
-		log.Debug("Waiting for channel ....")
 		for {
-			currentTasks := <-taskChannel
-			if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-				glib.TimeoutAdd(0, func() bool {
-					log.Debug("refreshing...")
-					buildMainBox(currentTasks, alignmentBox)
-					oldTasks = currentTasks
-					oldWsNum = currentWsNum
-					targetWsNum = currentWsNum
-					refresh = false
-					return false
-				})
+			select {
+
+			// Refresh if any pin/unpin action happened
+			case <-refreshMainBoxChannel:
+				currentTasks, err := listTasks()
+				if err != nil {
+					log.Fatal("Unable to retrieve task list from sway!")
+				}
+
+				refreshMainBox(currentTasks)
+
+			// Refresh if the state of the workspace changes
+			case currentTasks := <-taskChannel:
+				refreshMainBox(currentTasks)
+
 			}
 		}
 	}()
