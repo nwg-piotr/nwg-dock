@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -10,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/allan-simon/go-singleinstance"
 	"github.com/dlasky/gotk3-layershell/layershell"
@@ -21,6 +21,13 @@ import (
 )
 
 const version = "0.2.2"
+
+type WindowState int
+
+const (
+	WindowShow WindowState = iota
+	WindowHide
+)
 
 var (
 	appDirs                            []string
@@ -37,8 +44,7 @@ var (
 	imgSizeScaled                      int
 	currentWsNum, targetWsNum          int64
 	win                                *gtk.Window
-	showWindowTrigger                  bool
-	hideWindowTrigger                  bool
+	windowStateChannel                 chan WindowState = make(chan WindowState, 1)
 )
 
 // Flags
@@ -203,7 +209,14 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 			button.Connect("clicked", func() {
 				elements := strings.Split(*launcherCmd, " ")
 				cmd := exec.Command(elements[0], elements[1:]...)
-				go cmd.Run()
+
+				go func() {
+					err := cmd.Run()
+					if err != nil {
+						log.Warnf("Unable to start program: %s", err.Error())
+					}
+				}()
+
 				if *autohide {
 					win.Hide()
 				}
@@ -305,10 +318,10 @@ func main() {
 					// let's just set e helper variable here. We'll be checking it with glib.TimeoutAdd.
 					if !win.IsVisible() {
 						log.Debug("SIGUSR1 received, showing the window")
-						showWindowTrigger = true
+						windowStateChannel <- WindowShow
 					} else {
 						log.Debug("SIGUSR1 received, hiding the window")
-						hideWindowTrigger = true
+						windowStateChannel <- WindowHide
 					}
 				} else {
 					log.Info("SIGUSR1 received, and I'm not resident, bye bye!")
@@ -502,18 +515,31 @@ func main() {
 
 	buildMainBox(tasks, alignmentBox)
 
-	glib.TimeoutAdd(uint(150), func() bool {
-		currentTasks, _ := listTasks()
-		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-			log.Debug("refreshing...")
-			buildMainBox(currentTasks, alignmentBox)
-			oldTasks = currentTasks
-			oldWsNum = currentWsNum
-			targetWsNum = currentWsNum
-			refresh = false
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		taskChannel, err := processTaskChanges(ctx)
+		if err != nil {
+			log.Fatal("Unable to process sway tasks:", err)
 		}
-		return true
-	})
+
+		log.Debug("Waiting for channel ....")
+		for {
+			currentTasks := <-taskChannel
+			if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
+				glib.TimeoutAdd(0, func() bool {
+					log.Debug("refreshing...")
+					buildMainBox(currentTasks, alignmentBox)
+					oldTasks = currentTasks
+					oldWsNum = currentWsNum
+					targetWsNum = currentWsNum
+					refresh = false
+					return false
+				})
+			}
+		}
+	}()
 
 	win.ShowAll()
 
@@ -548,18 +574,22 @@ func main() {
 		}
 	}
 
-	glib.TimeoutAdd(uint(1), func() bool {
-		if showWindowTrigger && win != nil && !win.IsVisible() {
-			win.ShowAll()
-			showWindowTrigger = false
-		}
-		if hideWindowTrigger && win != nil && win.IsVisible() {
-			win.Hide()
-			hideWindowTrigger = false
-		}
+	go func() {
+		for {
+			windowState := <-windowStateChannel
 
-		return true
-	})
+			glib.TimeoutAdd(0, func() bool {
+				if windowState == WindowShow && win != nil && !win.IsVisible() {
+					win.ShowAll()
+				}
+				if windowState == WindowHide && win != nil && win.IsVisible() {
+					win.Hide()
+				}
+
+				return false
+			})
+		}
+	}()
 
 	gtk.Main()
 }

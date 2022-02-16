@@ -41,6 +41,65 @@ func taskInstances(ID string, tasks []task) []task {
 	return found
 }
 
+type TaskChange struct {
+	Change string
+	Task   *task
+}
+
+type swayEventHandler struct {
+	updateChannel chan TaskChange
+}
+
+func (t swayEventHandler) Workspace(ctx context.Context, event sway.WorkspaceEvent)             {}
+func (t swayEventHandler) Mode(ctx context.Context, event sway.ModeEvent)                       {}
+func (t swayEventHandler) BarConfigUpdate(ctx context.Context, event sway.BarConfigUpdateEvent) {}
+func (t swayEventHandler) Binding(ctx context.Context, event sway.BindingEvent)                 {}
+func (t swayEventHandler) Shutdown(ctx context.Context, event sway.ShutdownEvent)               {}
+func (t swayEventHandler) Tick(ctx context.Context, event sway.TickEvent)                       {}
+func (t swayEventHandler) BarStatusUpdate(ctx context.Context, event sway.BarStatusUpdateEvent) {}
+func (t swayEventHandler) Window(ctx context.Context, window sway.WindowEvent) {
+	if window.Change == "new" || window.Change == "close" {
+		t.updateChannel <- TaskChange{
+			Change: window.Change,
+			// TODO: gather enough details form sway.WindowEvent to create the task
+			// structure and pass it on for smarter modifying the task array
+			Task: nil,
+		}
+	}
+}
+
+// TODO: The channel should *not* return a []task, but rather a TaskChange event which should
+// be used to modify the list in the frontend ...
+func processTaskChanges(ctx context.Context) (chan []task, error) {
+	taskArrayChannel := make(chan []task, 1)
+	eventHandler := swayEventHandler{
+		updateChannel: make(chan TaskChange, 1),
+	}
+
+	go func() {
+		// Blocks execution until we cancel the context
+		if err := sway.Subscribe(ctx, eventHandler, sway.EventTypeWindow); err != nil {
+			log.Fatal("Unable to subscribe to sway event:", err)
+		}
+	}()
+
+	// Pretty hacky, but is simply used to convert a TaskChange to a task struct
+	go func() {
+		for {
+			<-eventHandler.updateChannel
+			tasks, err := listTasks()
+			if err != nil {
+				log.Errorf("Unable to process tasks from sway: %s", err.Error())
+				return
+			}
+
+			taskArrayChannel <- tasks
+		}
+	}()
+
+	return taskArrayChannel, nil
+}
+
 // list sway tree, return tasks sorted by workspace numbers
 func listTasks() ([]task, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
