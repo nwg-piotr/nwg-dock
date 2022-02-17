@@ -155,9 +155,10 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	if !*noWs {
 		wsButton, _ := gtk.ButtonNew()
-		wsImage, err := createImage(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
-			imgSizeScaled)
+		wsPixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
+			imgSizeScaled, imgSizeScaled)
 		if err == nil {
+			wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
 			wsButton.SetImage(wsImage)
 			wsButton.SetAlwaysShowImage(true)
 			wsButton.AddEvents(int(gdk.SCROLL_MASK))
@@ -201,8 +202,9 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	if !*noLauncher && *launcherCmd != "" {
 		button, _ := gtk.ButtonNew()
-		image, err := createImage(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled, imgSizeScaled)
 		if err == nil {
+			image, _ := gtk.ImageNewFromPixbuf(pixbuf)
 			button.SetImage(image)
 			button.SetAlwaysShowImage(true)
 
@@ -222,7 +224,10 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 				}
 			})
 			button.Connect("enter-notify-event", cancelClose)
+		} else {
+			log.Errorf("Unable to show grid button: %s", err.Error())
 		}
+
 		mainBox.PackStart(button, false, false, 0)
 	}
 
