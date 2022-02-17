@@ -163,6 +163,28 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 			wsButton.SetAlwaysShowImage(true)
 			wsButton.AddEvents(int(gdk.SCROLL_MASK))
 
+			wsUpdateChannel := getWorkspaceChangesChannel(context.Background())
+			go func() {
+				for {
+					activeWorkspace := <-wsUpdateChannel
+					targetWsNum = activeWorkspace
+
+					glib.TimeoutAdd(0, func() bool {
+						wsPixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace)),
+							imgSizeScaled, imgSizeScaled)
+
+						if err == nil {
+							wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
+							wsButton.SetImage(wsImage)
+						} else {
+							log.Warnf("Unable set set workspace image: %v", activeWorkspace)
+						}
+
+						return false
+					})
+				}
+			}()
+
 			wsButton.Connect("clicked", func() {
 				focusWorkspace(targetWsNum)
 			})
@@ -177,10 +199,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					} else {
 						targetWsNum = 1
 					}
-					pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg",
-						targetWsNum)), imgSizeScaled, imgSizeScaled)
-					wsImage.SetFromPixbuf(pixbuf)
 
+					wsUpdateChannel <- targetWsNum
 					return true
 				} else if event.Direction() == gdk.SCROLL_DOWN {
 					if targetWsNum > 1 {
@@ -188,10 +208,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					} else {
 						targetWsNum = *numWS
 					}
-					pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg",
-						targetWsNum)), imgSizeScaled, imgSizeScaled)
-					wsImage.SetFromPixbuf(pixbuf)
 
+					wsUpdateChannel <- targetWsNum
 					return true
 				}
 				return false
@@ -537,7 +555,7 @@ func main() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		taskChannel, err := processTaskChanges(ctx)
+		taskChannel, err := getTaskChangesChannel(ctx)
 		if err != nil {
 			log.Fatal("Unable to process sway tasks:", err)
 		}

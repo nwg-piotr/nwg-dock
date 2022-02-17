@@ -47,10 +47,17 @@ type TaskChange struct {
 }
 
 type swayEventHandler struct {
-	updateChannel chan TaskChange
+	taskUpdateChannel      chan TaskChange
+	workspaceUpdateChannel chan int64
 }
 
-func (t swayEventHandler) Workspace(ctx context.Context, event sway.WorkspaceEvent)             {}
+func (t swayEventHandler) Workspace(ctx context.Context, event sway.WorkspaceEvent) {
+	if event.Change == "focus" {
+		// TODO: sway.WorkspaceEvent.Current should contain a Workspace, but contains Node,
+		// this may be an error of the used library ...
+		t.workspaceUpdateChannel <- 0
+	}
+}
 func (t swayEventHandler) Mode(ctx context.Context, event sway.ModeEvent)                       {}
 func (t swayEventHandler) BarConfigUpdate(ctx context.Context, event sway.BarConfigUpdateEvent) {}
 func (t swayEventHandler) Binding(ctx context.Context, event sway.BindingEvent)                 {}
@@ -59,7 +66,7 @@ func (t swayEventHandler) Tick(ctx context.Context, event sway.TickEvent)       
 func (t swayEventHandler) BarStatusUpdate(ctx context.Context, event sway.BarStatusUpdateEvent) {}
 func (t swayEventHandler) Window(ctx context.Context, window sway.WindowEvent) {
 	if window.Change == "new" || window.Change == "close" {
-		t.updateChannel <- TaskChange{
+		t.taskUpdateChannel <- TaskChange{
 			Change: window.Change,
 			// TODO: gather enough details form sway.WindowEvent to create the task
 			// structure and pass it on for smarter modifying the task array
@@ -70,10 +77,10 @@ func (t swayEventHandler) Window(ctx context.Context, window sway.WindowEvent) {
 
 // TODO: The channel should *not* return a []task, but rather a TaskChange event which should
 // be used to modify the list in the frontend ...
-func processTaskChanges(ctx context.Context) (chan []task, error) {
+func getTaskChangesChannel(ctx context.Context) (chan []task, error) {
 	taskArrayChannel := make(chan []task, 1)
 	eventHandler := swayEventHandler{
-		updateChannel: make(chan TaskChange, 1),
+		taskUpdateChannel: make(chan TaskChange, 1),
 	}
 
 	go func() {
@@ -86,7 +93,7 @@ func processTaskChanges(ctx context.Context) (chan []task, error) {
 	// Pretty hacky, but is simply used to convert a TaskChange to a task struct
 	go func() {
 		for {
-			<-eventHandler.updateChannel
+			<-eventHandler.taskUpdateChannel
 			tasks, err := listTasks()
 			if err != nil {
 				log.Errorf("Unable to process tasks from sway: %s", err.Error())
@@ -98,6 +105,38 @@ func processTaskChanges(ctx context.Context) (chan []task, error) {
 	}()
 
 	return taskArrayChannel, nil
+}
+
+func getWorkspaceChangesChannel(ctx context.Context) chan int64 {
+	workspaceUpdateChannel := make(chan int64, 1)
+	eventHandler := swayEventHandler{
+		workspaceUpdateChannel: make(chan int64, 1),
+	}
+
+	go func() {
+		// Blocks execution until we cancel the context
+		if err := sway.Subscribe(ctx, eventHandler, sway.EventTypeWorkspace); err != nil {
+			log.Fatal("Unable to subscribe to sway event:", err)
+		}
+	}()
+
+	go func() {
+		ipc, _ := sway.New(ctx)
+
+		for {
+			<-eventHandler.workspaceUpdateChannel
+			workspaces, _ := ipc.GetWorkspaces(ctx)
+
+			for _, workspace := range workspaces {
+				if workspace.Focused {
+					workspaceUpdateChannel <- workspace.Num
+					break
+				}
+			}
+		}
+	}()
+
+	return workspaceUpdateChannel
 }
 
 // list sway tree, return tasks sorted by workspace numbers
