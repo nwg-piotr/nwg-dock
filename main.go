@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -10,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/allan-simon/go-singleinstance"
 	"github.com/dlasky/gotk3-layershell/layershell"
@@ -22,6 +22,13 @@ import (
 
 const version = "0.2.2"
 
+type WindowState int
+
+const (
+	WindowShow WindowState = iota
+	WindowHide
+)
+
 var (
 	appDirs                            []string
 	dataHome                           string
@@ -31,14 +38,13 @@ var (
 	oldTasks                           []task
 	mainBox                            *gtk.Box
 	src                                glib.SourceHandle
-	refresh                            bool // we will use this to trigger rebuilding mainBox
+	refreshMainBoxChannel              chan struct{} = make(chan struct{}, 1)
 	outerOrientation, innerOrientation gtk.Orientation
 	widgetAnchor, menuAnchor           gdk.Gravity
 	imgSizeScaled                      int
 	currentWsNum, targetWsNum          int64
 	win                                *gtk.Window
-	showWindowTrigger                  bool
-	hideWindowTrigger                  bool
+	windowStateChannel                 chan WindowState = make(chan WindowState, 1)
 )
 
 // Flags
@@ -149,12 +155,35 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	if !*noWs {
 		wsButton, _ := gtk.ButtonNew()
-		wsImage, err := createImage(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
-			imgSizeScaled)
+		wsPixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
+			imgSizeScaled, imgSizeScaled)
 		if err == nil {
+			wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
 			wsButton.SetImage(wsImage)
 			wsButton.SetAlwaysShowImage(true)
 			wsButton.AddEvents(int(gdk.SCROLL_MASK))
+
+			wsUpdateChannel := getWorkspaceChangesChannel(context.Background())
+			go func() {
+				for {
+					activeWorkspace := <-wsUpdateChannel
+					targetWsNum = activeWorkspace
+
+					glib.TimeoutAdd(0, func() bool {
+						wsPixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace)),
+							imgSizeScaled, imgSizeScaled)
+
+						if err == nil {
+							wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
+							wsButton.SetImage(wsImage)
+						} else {
+							log.Warnf("Unable set set workspace image: %v", activeWorkspace)
+						}
+
+						return false
+					})
+				}
+			}()
 
 			wsButton.Connect("clicked", func() {
 				focusWorkspace(targetWsNum)
@@ -170,10 +199,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					} else {
 						targetWsNum = 1
 					}
-					pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg",
-						targetWsNum)), imgSizeScaled, imgSizeScaled)
-					wsImage.SetFromPixbuf(pixbuf)
 
+					wsUpdateChannel <- targetWsNum
 					return true
 				} else if event.Direction() == gdk.SCROLL_DOWN {
 					if targetWsNum > 1 {
@@ -181,10 +208,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					} else {
 						targetWsNum = *numWS
 					}
-					pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg",
-						targetWsNum)), imgSizeScaled, imgSizeScaled)
-					wsImage.SetFromPixbuf(pixbuf)
 
+					wsUpdateChannel <- targetWsNum
 					return true
 				}
 				return false
@@ -195,21 +220,32 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	if !*noLauncher && *launcherCmd != "" {
 		button, _ := gtk.ButtonNew()
-		image, err := createImage(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled)
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled, imgSizeScaled)
 		if err == nil {
+			image, _ := gtk.ImageNewFromPixbuf(pixbuf)
 			button.SetImage(image)
 			button.SetAlwaysShowImage(true)
 
 			button.Connect("clicked", func() {
 				elements := strings.Split(*launcherCmd, " ")
 				cmd := exec.Command(elements[0], elements[1:]...)
-				go cmd.Run()
+
+				go func() {
+					err := cmd.Run()
+					if err != nil {
+						log.Warnf("Unable to start program: %s", err.Error())
+					}
+				}()
+
 				if *autohide {
 					win.Hide()
 				}
 			})
 			button.Connect("enter-notify-event", cancelClose)
+		} else {
+			log.Errorf("Unable to show grid button: %s", err.Error())
 		}
+
 		mainBox.PackStart(button, false, false, 0)
 	}
 
@@ -305,10 +341,10 @@ func main() {
 					// let's just set e helper variable here. We'll be checking it with glib.TimeoutAdd.
 					if !win.IsVisible() {
 						log.Debug("SIGUSR1 received, showing the window")
-						showWindowTrigger = true
+						windowStateChannel <- WindowShow
 					} else {
 						log.Debug("SIGUSR1 received, hiding the window")
-						hideWindowTrigger = true
+						windowStateChannel <- WindowHide
 					}
 				} else {
 					log.Info("SIGUSR1 received, and I'm not resident, bye bye!")
@@ -502,18 +538,47 @@ func main() {
 
 	buildMainBox(tasks, alignmentBox)
 
-	glib.TimeoutAdd(uint(150), func() bool {
-		currentTasks, _ := listTasks()
-		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum || refresh {
-			log.Debug("refreshing...")
-			buildMainBox(currentTasks, alignmentBox)
-			oldTasks = currentTasks
-			oldWsNum = currentWsNum
-			targetWsNum = currentWsNum
-			refresh = false
+	refreshMainBox := func(currentTasks []task, forceRefresh bool) {
+		if forceRefresh || (len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum) {
+			glib.TimeoutAdd(0, func() bool {
+				log.Debug("refreshing...")
+				buildMainBox(currentTasks, alignmentBox)
+				oldTasks = currentTasks
+				oldWsNum = currentWsNum
+				targetWsNum = currentWsNum
+				return false
+			})
 		}
-		return true
-	})
+	}
+
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		taskChannel, err := getTaskChangesChannel(ctx)
+		if err != nil {
+			log.Fatal("Unable to process sway tasks:", err)
+		}
+
+		for {
+			select {
+
+			// Refresh if any pin/unpin action happened
+			case <-refreshMainBoxChannel:
+				currentTasks, err := listTasks()
+				if err != nil {
+					log.Fatal("Unable to retrieve task list from sway!")
+				}
+
+				refreshMainBox(currentTasks, true)
+
+			// Refresh if the state of the workspace changes
+			case currentTasks := <-taskChannel:
+				refreshMainBox(currentTasks, false)
+
+			}
+		}
+	}()
 
 	win.ShowAll()
 
@@ -548,18 +613,22 @@ func main() {
 		}
 	}
 
-	glib.TimeoutAdd(uint(1), func() bool {
-		if showWindowTrigger && win != nil && !win.IsVisible() {
-			win.ShowAll()
-			showWindowTrigger = false
-		}
-		if hideWindowTrigger && win != nil && win.IsVisible() {
-			win.Hide()
-			hideWindowTrigger = false
-		}
+	go func() {
+		for {
+			windowState := <-windowStateChannel
 
-		return true
-	})
+			glib.TimeoutAdd(0, func() bool {
+				if windowState == WindowShow && win != nil && !win.IsVisible() {
+					win.ShowAll()
+				}
+				if windowState == WindowHide && win != nil && win.IsVisible() {
+					win.Hide()
+				}
+
+				return false
+			})
+		}
+	}()
 
 	gtk.Main()
 }
