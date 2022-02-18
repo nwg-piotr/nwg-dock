@@ -538,8 +538,8 @@ func main() {
 
 	buildMainBox(tasks, alignmentBox)
 
-	refreshMainBox := func(currentTasks []task) {
-		if len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum {
+	refreshMainBox := func(currentTasks []task, forceRefresh bool) {
+		if forceRefresh || (len(currentTasks) != len(oldTasks) || currentWsNum != oldWsNum) {
 			glib.TimeoutAdd(0, func() bool {
 				log.Debug("refreshing...")
 				buildMainBox(currentTasks, alignmentBox)
@@ -570,11 +570,11 @@ func main() {
 					log.Fatal("Unable to retrieve task list from sway!")
 				}
 
-				refreshMainBox(currentTasks)
+				refreshMainBox(currentTasks, true)
 
 			// Refresh if the state of the workspace changes
 			case currentTasks := <-taskChannel:
-				refreshMainBox(currentTasks)
+				refreshMainBox(currentTasks, false)
 
 			}
 		}
