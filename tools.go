@@ -362,8 +362,8 @@ func taskButton(t task, instances []task) *gtk.Box {
 			   if con is located on an external display, after pressing the button, the conID value
 			   "freezes", and stays the same for all taskButtons, until the right mouse click.
 			   A gotk3 bug or WTF? */
-			if ( btnEvent.Type() == gdk.EVENT_BUTTON_RELEASE || btnEvent.Type() == gdk.EVENT_TOUCH_END ) {
-				if ( btnEvent.Button() == 1 || btnEvent.Type() == gdk.EVENT_TOUCH_END ) {
+			if btnEvent.Type() == gdk.EVENT_BUTTON_RELEASE || btnEvent.Type() == gdk.EVENT_TOUCH_END {
+				if btnEvent.Button() == 1 || btnEvent.Type() == gdk.EVENT_TOUCH_END {
 					focusCon(t.conID)
 					return true
 				} else if btnEvent.Button() == 3 {
