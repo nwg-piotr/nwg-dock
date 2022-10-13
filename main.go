@@ -395,11 +395,14 @@ func main() {
 
 	dataHome = getDataHome()
 	configDirectory = configDir()
-	// if doesn't exist:
+	// if it doesn't exist:
 	createDir(configDirectory)
 
 	if !pathExists(fmt.Sprintf("%s/style.css", configDirectory)) {
-		copyFile(filepath.Join(dataHome, "nwg-dock/style.css"), fmt.Sprintf("%s/style.css", configDirectory))
+		err := copyFile(filepath.Join(dataHome, "nwg-dock/style.css"), fmt.Sprintf("%s/style.css", configDirectory))
+		if err != nil {
+			log.Warnf("Error copying file: %s", err)
+		}
 	}
 
 	cacheDirectory := cacheDir()
@@ -597,8 +600,8 @@ func main() {
 			for _, monitor := range monitors {
 				win := setupHotSpot(monitor, win)
 
-				context, _ := win.GetStyleContext()
-				context.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+				ctx, _ := win.GetStyleContext()
+				ctx.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 				win.ShowAll()
 			}
@@ -607,8 +610,8 @@ func main() {
 			monitor := output2mon[*targetOutput]
 			win := setupHotSpot(*monitor, win)
 
-			context, _ := win.GetStyleContext()
-			context.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+			ctx, _ := win.GetStyleContext()
+			ctx.AddProvider(mRefProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 			win.ShowAll()
 		}

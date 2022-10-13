@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -585,7 +584,7 @@ func tempDir() string {
 }
 
 func readTextFile(path string) (string, error) {
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
@@ -597,7 +596,7 @@ func configDir() string {
 	if os.Getenv("XDG_CONFIG_HOME") != "" {
 		return (fmt.Sprintf("%s/nwg-dock", os.Getenv("XDG_CONFIG_HOME")))
 	}
-	return (fmt.Sprintf("%s/.config/nwg-dock", os.Getenv("HOME")))
+	return fmt.Sprintf("%s/.config/nwg-dock", os.Getenv("HOME"))
 }
 
 func createDir(dir string) {
@@ -718,7 +717,7 @@ func getIcon(appName string) (string, error) {
 func searchDesktopDirs(badAppID string) string {
 	b4Hyphen := strings.Split(badAppID, "-")[0]
 	for _, d := range appDirs {
-		items, _ := ioutil.ReadDir(d)
+		items, _ := os.ReadDir(d)
 		for _, item := range items {
 			if strings.Contains(item.Name(), b4Hyphen) {
 				//Let's check items starting from 'org.' first
@@ -737,7 +736,7 @@ func getExec(appName string) (string, error) {
 		cmd = "gimp"
 	}
 	for _, d := range appDirs {
-		files, _ := ioutil.ReadDir(d)
+		files, _ := os.ReadDir(d)
 		path := ""
 		for _, f := range files {
 			if strings.HasSuffix(f.Name(), ".desktop") {
@@ -779,7 +778,7 @@ func getExec(appName string) (string, error) {
 func getName(appName string) string {
 	name := appName
 	for _, d := range appDirs {
-		files, _ := ioutil.ReadDir(d)
+		files, _ := os.ReadDir(d)
 		path := ""
 		for _, f := range files {
 			if strings.HasSuffix(f.Name(), ".desktop") {
@@ -817,7 +816,7 @@ func pathExists(name string) bool {
 }
 
 func loadTextFile(path string) ([]string, error) {
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
