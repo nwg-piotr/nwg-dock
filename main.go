@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -46,6 +47,7 @@ var (
 	currentWsNum, targetWsNum          int64
 	win                                *gtk.Window
 	windowStateChannel                 chan WindowState = make(chan WindowState, 1)
+	detectorEnteredAt                  int64
 )
 
 // Flags
@@ -65,6 +67,7 @@ var marginTop = flag.Int("mt", 0, "Margin Top")
 var marginLeft = flag.Int("ml", 0, "Margin Left")
 var marginRight = flag.Int("mr", 0, "Margin Right")
 var marginBottom = flag.Int("mb", 0, "Margin Bottom")
+var hotspotDelay = flag.Int64("hd", 30, "Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear")
 var noWs = flag.Bool("nows", false, "don't show the workspace switcher")
 var noLauncher = flag.Bool("nolauncher", false, "don't show the launcher button")
 var resident = flag.Bool("r", false, "Leave the program resident, but w/o hotspot")
@@ -255,23 +258,57 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	w, h := dockWindow.GetSize()
-
 	win, _ := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 
 	layershell.InitForWindow(win)
 	layershell.SetMonitor(win, &monitor)
 
-	box, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+	var box *gtk.Box
+	if *position == "bottom" || *position == "top" {
+		box, _ = gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
+	} else {
+		box, _ = gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 0)
+	}
 	win.Add(box)
 
-	win.Connect("enter-notify-event", func() {
+	detectorBox, _ := gtk.EventBoxNew()
+	detectorBox.SetProperty("name", "detector-box")
+
+	if *position == "bottom" {
+		box.PackStart(detectorBox, false, false, 0)
+	} else {
+		box.PackEnd(detectorBox, false, false, 0)
+	}
+
+	detectorBox.Connect("enter-notify-event", func() {
+		detectorEnteredAt = time.Now().UnixNano() / 1000000
+	})
+
+	hotspotBox, _ := gtk.EventBoxNew()
+	hotspotBox.SetProperty("name", "hotspot-box")
+
+	if *position == "bottom" {
+		box.PackStart(hotspotBox, false, false, 0)
+	} else {
+		box.PackEnd(hotspotBox, false, false, 0)
+	}
+
+	hotspotBox.Connect("enter-notify-event", func() {
+		hotspotEnteredAt := time.Now().UnixNano() / 1000000
+		delay := hotspotEnteredAt - detectorEnteredAt
 		layershell.SetMonitor(dockWindow, &monitor)
-		dockWindow.Hide()
-		dockWindow.Show()
+		if delay <= *hotspotDelay {
+			log.Debugf("Delay %v < %v ms, let's show the window!", delay, *hotspotDelay)
+			dockWindow.Hide()
+			dockWindow.Show()
+		} else {
+			log.Debugf("Delay %v > %v ms, don't show the window :/", delay, *hotspotDelay)
+		}
 	})
 
 	if *position == "bottom" || *position == "top" {
-		win.SetSizeRequest(w, 10)
+		detectorBox.SetSizeRequest(w, h/5)
+		hotspotBox.SetSizeRequest(w, 2)
 		if *position == "bottom" {
 			layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_BOTTOM, true)
 		} else {
@@ -283,7 +320,8 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	}
 
 	if *position == "left" {
-		win.SetSizeRequest(10, h)
+		detectorBox.SetSizeRequest(w/5, h)
+		hotspotBox.SetSizeRequest(2, h)
 		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_LEFT, true)
 
 		layershell.SetAnchor(win, layershell.LAYER_SHELL_EDGE_TOP, *full)
