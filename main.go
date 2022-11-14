@@ -67,7 +67,7 @@ var marginTop = flag.Int("mt", 0, "Margin Top")
 var marginLeft = flag.Int("ml", 0, "Margin Left")
 var marginRight = flag.Int("mr", 0, "Margin Right")
 var marginBottom = flag.Int("mb", 0, "Margin Bottom")
-var hotspotDelay = flag.Int64("hd", 20, "Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear")
+var hotspotDelay = flag.Int64("hd", 20, "Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear; set 0 to disable")
 var noWs = flag.Bool("nows", false, "don't show the workspace switcher")
 var noLauncher = flag.Bool("nolauncher", false, "don't show the launcher button")
 var resident = flag.Bool("r", false, "Leave the program resident, but w/o hotspot")
@@ -297,7 +297,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 		hotspotEnteredAt := time.Now().UnixNano() / 1000000
 		delay := hotspotEnteredAt - detectorEnteredAt
 		layershell.SetMonitor(dockWindow, &monitor)
-		if delay <= *hotspotDelay {
+		if delay <= *hotspotDelay || *hotspotDelay == 0 {
 			log.Debugf("Delay %v < %v ms, let's show the window!", delay, *hotspotDelay)
 			dockWindow.Hide()
 			dockWindow.Show()
