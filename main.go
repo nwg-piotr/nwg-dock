@@ -272,7 +272,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	win.Add(box)
 
 	detectorBox, _ := gtk.EventBoxNew()
-	detectorBox.SetProperty("name", "detector-box")
+	_ = detectorBox.SetProperty("name", "detector-box")
 
 	if *position == "bottom" {
 		box.PackStart(detectorBox, false, false, 0)
@@ -285,7 +285,7 @@ func setupHotSpot(monitor gdk.Monitor, dockWindow *gtk.Window) gtk.Window {
 	})
 
 	hotspotBox, _ := gtk.EventBoxNew()
-	hotspotBox.SetProperty("name", "hotspot-box")
+	_ = hotspotBox.SetProperty("name", "hotspot-box")
 
 	if *position == "bottom" {
 		box.PackStart(hotspotBox, false, false, 0)
@@ -408,7 +408,7 @@ func main() {
 				if *autohide || *resident {
 					log.Info("Running instance found, terminating...")
 				} else {
-					syscall.Kill(i, syscall.SIGUSR1)
+					_ = syscall.Kill(i, syscall.SIGUSR1)
 					log.Info("Sending SIGUSR1 to running instance and bye, bye!")
 				}
 			}
@@ -562,7 +562,7 @@ func main() {
 	})
 
 	outerBox, _ := gtk.BoxNew(outerOrientation, 0)
-	outerBox.SetProperty("name", "box")
+	_ = outerBox.SetProperty("name", "box")
 	win.Add(outerBox)
 
 	alignmentBox, _ := gtk.BoxNew(innerOrientation, 0)
