@@ -41,7 +41,7 @@ func taskInstances(ID string, tasks []task) []task {
 }
 
 type TaskChange struct {
-	Change string
+	Change sway.WindowEventChange
 	Task   *task
 }
 
@@ -62,7 +62,9 @@ func (t swayEventHandler) BarConfigUpdate(ctx context.Context, event sway.BarCon
 func (t swayEventHandler) Binding(ctx context.Context, event sway.BindingEvent)                 {}
 func (t swayEventHandler) Shutdown(ctx context.Context, event sway.ShutdownEvent)               {}
 func (t swayEventHandler) Tick(ctx context.Context, event sway.TickEvent)                       {}
-func (t swayEventHandler) BarStatusUpdate(ctx context.Context, event sway.BarStatusUpdateEvent) {}
+func (t swayEventHandler) BarStateUpdate(ctx context.Context, event sway.BarStateUpdateEvent)   {}
+func (t swayEventHandler) BarStatusUpdate(ctx context.Context, event sway.BarStateUpdateEvent)  {}
+func (t swayEventHandler) Input(ctx context.Context, event sway.InputEvent)                     {}
 func (t swayEventHandler) Window(ctx context.Context, window sway.WindowEvent) {
 	if window.Change == "new" || window.Change == "close" {
 		t.taskUpdateChannel <- TaskChange{
