@@ -201,14 +201,23 @@ func listTasks() ([]task, error) {
 
 		// create tasks from cons which represent tasks
 		for _, con := range descendants {
-			tasks = append(tasks, createTask(con, wsNum))
+			t, err := createTask(con, wsNum)
+			if err == nil {
+				tasks = append(tasks, *t)
+			} else {
+				log.Warn(err)
+			}
 		}
 
 		fNodes := w.FloatingNodes
 		for _, con := range fNodes {
-			tasks = append(tasks, createTask(*con, wsNum))
+			t, err := createTask(*con, wsNum)
+			if err == nil {
+				tasks = append(tasks, *t)
+			} else {
+				log.Warn(err)
+			}
 		}
-
 	}
 	sort.Slice(tasks, func(i int, j int) bool {
 		return tasks[i].WsNum < tasks[j].WsNum
@@ -226,20 +235,27 @@ func findDescendants(con sway.Node) {
 	}
 }
 
-func createTask(con sway.Node, wsNum int64) task {
-	t := task{}
+func createTask(con sway.Node, wsNum int64) (*task, error) {
+	t := &task{}
 	t.conID = con.ID
 	if con.AppID != nil {
 		t.ID = *con.AppID
-	} else {
+	} else if con.WindowProperties != nil {
 		wp := *con.WindowProperties
 		t.ID = wp.Class
+	} else {
+		return nil, errors.New("damaged Node data received, task skipped")
 	}
 	t.Name = con.Name
-	t.PID = *con.PID
+	if con.PID != nil {
+		t.PID = *con.PID
+	} else {
+		return nil, errors.New("damaged Node data received, task skipped")
+	}
+
 	t.WsNum = wsNum
 
-	return t
+	return t, nil
 }
 
 func workspaceNum(workspaces []sway.Workspace, name string) int64 {
