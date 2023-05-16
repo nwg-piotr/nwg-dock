@@ -118,6 +118,28 @@ Usage of nwg-dock:
 
 Edit `~/.config/nwg-dock/style.css` to your taste.
 
+## Troubleshooting
+
+### An application icon is not displayed
+
+The only thing the dock knows about the app is it's app_id.
+
+```text
+$ swaymsg -t get_tree
+(...)
+        #13: con "piotr@msi:~" (xdg_shell, pid: 8512, app_id: "foot")
+```
+
+Now it'll look for an icon named 'foot'. If that fails, it'll look for a .desktop file named 'foot.desktop', which should contain the icon name or path. If this fails as well, no icon will be displayed. I've added workarounds for some most common exceptions, but it's impossible to predict every single application misbehaviour. This is either programmers fault (improper class name), or bad packaging (.desktop file name different from the application class name).
+
+If some app has no icon in the dock:
+
+1. check the app class name (`swaymsg -t get_tree`);
+2. find the app's .desktop file;
+3. copy it to ~/.local/share/applications/` and rename to <class_name>.desktop.
+
+If the .desktop file contains proper icon definition (`Icon=`), it should work now.
+
 ## Credits
 
 This program uses some great libraries:
