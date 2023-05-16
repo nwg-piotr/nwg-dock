@@ -733,15 +733,28 @@ func getIcon(appName string) (string, error) {
 }
 
 func searchDesktopDirs(badAppID string) string {
-	b4Hyphen := strings.Split(badAppID, "-")[0]
+	b4Separator := strings.Split(badAppID, "-")[0]
 	for _, d := range appDirs {
 		items, _ := os.ReadDir(d)
 		for _, item := range items {
-			if strings.Contains(item.Name(), b4Hyphen) {
+			if strings.Contains(item.Name(), b4Separator) {
 				//Let's check items starting from 'org.' first
-				if strings.Count(item.Name(), ".") > 1 {
+				if strings.Count(item.Name(), ".") > 1 && strings.HasSuffix(item.Name(),
+					fmt.Sprintf("%s.desktop", badAppID)) {
 					return filepath.Join(d, item.Name())
+				} else {
+					return ""
 				}
+			}
+		}
+	}
+	// exceptions like "class": "VirtualBox Manager" & virtualbox.desktop
+	b4Separator = strings.Split(badAppID, " ")[0]
+	for _, d := range appDirs {
+		items, _ := os.ReadDir(d)
+		for _, item := range items {
+			if strings.Contains(strings.ToUpper(item.Name()), strings.ToUpper(b4Separator)) {
+				return filepath.Join(d, item.Name())
 			}
 		}
 	}
