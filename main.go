@@ -140,8 +140,7 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 
 	alreadyAdded = nil
 	for _, task := range tasks {
-		// nwggrid is the default launcher, we don't want to see it as a task
-		if !inPinned(task.ID) && task.ID != "nwggrid" {
+		if !inPinned(task.ID) {
 			instances := taskInstances(task.ID, tasks)
 			if len(instances) == 1 {
 				button := taskButton(task, instances)
@@ -158,10 +157,13 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	}
 
 	if !*noWs {
-		wsButton, _ := gtk.ButtonNew()
-		wsPixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
+		wsButton, e := gtk.ButtonNew()
+		if e != nil {
+			return
+		}
+		wsPixbuf, e := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
 			imgSizeScaled, imgSizeScaled)
-		if err == nil {
+		if e == nil {
 			wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
 			wsButton.SetImage(wsImage)
 			wsButton.SetAlwaysShowImage(true)
@@ -174,11 +176,11 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					targetWsNum = activeWorkspace
 
 					glib.TimeoutAdd(0, func() bool {
-						wsPixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace)),
+						wsPixbuf, e = gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace)),
 							imgSizeScaled, imgSizeScaled)
 
-						if err == nil {
-							wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
+						if e == nil {
+							wsImage, _ = gtk.ImageNewFromPixbuf(wsPixbuf)
 							wsButton.SetImage(wsImage)
 						} else {
 							log.Warnf("Unable set set workspace image: %v", activeWorkspace)
@@ -219,7 +221,9 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 				return false
 			})
 		}
-		mainBox.PackStart(wsButton, false, false, 0)
+		if wsButton != nil {
+			mainBox.PackStart(wsButton, false, false, 0)
+		}
 	}
 
 	if !*noLauncher && *launcherCmd != "" {
