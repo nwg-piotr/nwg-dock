@@ -413,10 +413,8 @@ func taskButton(t task, instances []task) *gtk.Box {
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
 
-	iconName, err := getIcon(taskID)
-	if err != nil {
-		log.Warn(err)
-	}
+	iconName, _ := getIcon(taskID)
+
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
@@ -729,7 +727,7 @@ func getIcon(appName string) (string, error) {
 			}
 		}
 	}
-	return "", errors.New("couldn't find the icon")
+	return "", errors.New(fmt.Sprintf("couldn't find the icon for %s", appName))
 }
 
 func searchDesktopDirs(badAppID string) string {
