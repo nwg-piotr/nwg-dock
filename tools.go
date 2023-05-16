@@ -201,14 +201,23 @@ func listTasks() ([]task, error) {
 
 		// create tasks from cons which represent tasks
 		for _, con := range descendants {
-			tasks = append(tasks, createTask(con, wsNum))
+			t, err := createTask(con, wsNum)
+			if err == nil {
+				tasks = append(tasks, *t)
+			} else {
+				log.Warn(err)
+			}
 		}
 
 		fNodes := w.FloatingNodes
 		for _, con := range fNodes {
-			tasks = append(tasks, createTask(*con, wsNum))
+			t, err := createTask(*con, wsNum)
+			if err == nil {
+				tasks = append(tasks, *t)
+			} else {
+				log.Warn(err)
+			}
 		}
-
 	}
 	sort.Slice(tasks, func(i int, j int) bool {
 		return tasks[i].WsNum < tasks[j].WsNum
@@ -226,20 +235,27 @@ func findDescendants(con sway.Node) {
 	}
 }
 
-func createTask(con sway.Node, wsNum int64) task {
-	t := task{}
+func createTask(con sway.Node, wsNum int64) (*task, error) {
+	t := &task{}
 	t.conID = con.ID
 	if con.AppID != nil {
 		t.ID = *con.AppID
-	} else {
+	} else if con.WindowProperties != nil {
 		wp := *con.WindowProperties
 		t.ID = wp.Class
+	} else {
+		return nil, errors.New("damaged Node data received, task skipped")
 	}
 	t.Name = con.Name
-	t.PID = *con.PID
+	if con.PID != nil {
+		t.PID = *con.PID
+	} else {
+		return nil, errors.New("damaged Node data received, task skipped")
+	}
+
 	t.WsNum = wsNum
 
-	return t
+	return t, nil
 }
 
 func workspaceNum(workspaces []sway.Workspace, name string) int64 {
@@ -397,10 +413,8 @@ func taskButton(t task, instances []task) *gtk.Box {
 func taskMenu(taskID string, instances []task) gtk.Menu {
 	menu, _ := gtk.MenuNew()
 
-	iconName, err := getIcon(taskID)
-	if err != nil {
-		log.Warn(err)
-	}
+	iconName, _ := getIcon(taskID)
+
 	for _, instance := range instances {
 		menuItem, _ := gtk.MenuItemNew()
 		hbox, _ := gtk.BoxNew(gtk.ORIENTATION_HORIZONTAL, 6)
@@ -713,19 +727,32 @@ func getIcon(appName string) (string, error) {
 			}
 		}
 	}
-	return "", errors.New("couldn't find the icon")
+	return "", errors.New(fmt.Sprintf("couldn't find the icon for %s", appName))
 }
 
 func searchDesktopDirs(badAppID string) string {
-	b4Hyphen := strings.Split(badAppID, "-")[0]
+	b4Separator := strings.Split(badAppID, "-")[0]
 	for _, d := range appDirs {
 		items, _ := os.ReadDir(d)
 		for _, item := range items {
-			if strings.Contains(item.Name(), b4Hyphen) {
+			if strings.Contains(item.Name(), b4Separator) {
 				//Let's check items starting from 'org.' first
-				if strings.Count(item.Name(), ".") > 1 {
+				if strings.Count(item.Name(), ".") > 1 && strings.HasSuffix(item.Name(),
+					fmt.Sprintf("%s.desktop", badAppID)) {
 					return filepath.Join(d, item.Name())
+				} else {
+					return ""
 				}
+			}
+		}
+	}
+	// exceptions like "class": "VirtualBox Manager" & virtualbox.desktop
+	b4Separator = strings.Split(badAppID, " ")[0]
+	for _, d := range appDirs {
+		items, _ := os.ReadDir(d)
+		for _, item := range items {
+			if strings.Contains(strings.ToUpper(item.Name()), strings.ToUpper(b4Separator)) {
+				return filepath.Join(d, item.Name())
 			}
 		}
 	}
