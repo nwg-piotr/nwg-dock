@@ -16,7 +16,7 @@ Fully configurable (w/ command line arguments and css) dock, written in Go, aime
 
 ### Requirements
 
-- `go`>=1.16 (just to build)
+- `go`>=1.20 (just to build)
 - `gtk3`
 - `gtk-layer-shell`
 - [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or
