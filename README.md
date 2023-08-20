@@ -75,7 +75,7 @@ running residently, another instance will just exit with 0 code. In case you'd l
 auto-start the dock with.*
 
 ```txt
-nwg-dock -h
+$ nwg-dock -h
 Usage of nwg-dock:
   -a string
     	Alignment in full width/height: "start", "center" or "end" (default "center")
@@ -85,8 +85,12 @@ Usage of nwg-dock:
   -debug
     	turn on debug messages
   -f	take Full screen width/height
+  -hd int
+    	Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear; set 0 to disable (default 20)
   -i int
     	Icon size (default 48)
+  -ico string
+    	alternative name or path for the launcher ICOn
   -l string
     	Layer "overlay", "top" or "bottom" (default "overlay")
   -mb int
