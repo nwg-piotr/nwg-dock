@@ -743,8 +743,6 @@ func searchDesktopDirs(badAppID string) string {
 				if strings.Count(item.Name(), ".") > 1 && strings.HasSuffix(item.Name(),
 					fmt.Sprintf("%s.desktop", badAppID)) {
 					return filepath.Join(d, item.Name())
-				} else {
-					return ""
 				}
 			}
 		}
