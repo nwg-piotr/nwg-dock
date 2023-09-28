@@ -285,9 +285,11 @@ func pinnedButton(ID string) *gtk.Box {
 		}
 	}
 
-	button.SetImage(image)
-	button.SetImagePosition(gtk.POS_TOP)
-	button.SetAlwaysShowImage(true)
+	if image != nil {
+		button.SetImage(image)
+		button.SetImagePosition(gtk.POS_TOP)
+		button.SetAlwaysShowImage(true)
+	}
 	button.SetTooltipText(getName(ID))
 	pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-empty.svg"),
 		imgSizeScaled, imgSizeScaled/8)
@@ -356,9 +358,11 @@ func taskButton(t task, instances []task) *gtk.Box {
 		}
 	}
 
-	button.SetImage(image)
-	button.SetImagePosition(gtk.POS_TOP)
-	button.SetAlwaysShowImage(true)
+	if image != nil {
+		button.SetImage(image)
+		button.SetImagePosition(gtk.POS_TOP)
+		button.SetAlwaysShowImage(true)
+	}
 	button.SetTooltipText(getName(t.ID))
 	var img *gtk.Image
 	if len(instances) < 2 {
