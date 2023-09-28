@@ -1,6 +1,6 @@
 module github.com/nwg-piotr/nwg-dock
 
-go 1.20
+go 1.21
 
 require (
 	github.com/allan-simon/go-singleinstance v0.0.0-20210120080615-d0997106ab37
