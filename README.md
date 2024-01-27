@@ -8,7 +8,7 @@ For **Hyprland support** please use [nwg-dock-hyprland](https://github.com/nwg-p
 
 Fully configurable (w/ command line arguments and css) dock, written in Go, aimed exclusively at [sway](https://github.com/swaywm/sway) Wayland compositor. It features pinned buttons, task buttons, the workspace switcher and the launcher button. The latter by default starts [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) or `nwggrid` (application grid) - if found. In the picture(s) below the dock has been shown together with [nwg-panel](https://github.com/nwg-piotr/nwg-panel).
 
-![screenshot-1.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-1.png)
+<img src="https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-1.png" width=640 alt="Screenshot">
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/nwg-dock.svg)](https://repology.org/project/nwg-dock/versions)
 
@@ -118,7 +118,7 @@ Usage of nwg-dock:
   -x	set eXclusive zone: move other windows aside; overrides the "-l" argument
 ```
 
-![screenshot-2.png](https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-2.png)
+<img src="https://raw.githubusercontent.com/nwg-piotr/nwg-shell-resources/master/images/nwg-dock/dock-2.png" width=640 alt="Screenshot"><br>
 
 ## Styling
 
