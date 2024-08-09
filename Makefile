@@ -11,7 +11,7 @@ get:
 	go get "github.com/sirupsen/logrus"
 
 build:
-	go build -o bin/nwg-dock .
+	go build -v -o bin/nwg-dock .
 
 install:
 	-pkill -f nwg-dock
