@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
@@ -62,6 +61,7 @@ var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows as
 var imgSize = flag.Int("i", 48, "Icon size")
 var layer = flag.String("l", "overlay", "Layer \"overlay\", \"top\" or \"bottom\"")
 var launcherCmd = flag.String("c", "", "Command assigned to the launcher button")
+var launcherPos = flag.String("lp", "end", "Launcher button position, 'start' or 'end'")
 var alignment = flag.String("a", "center", "Alignment in full width/height: \"start\", \"center\" or \"end\"")
 var marginTop = flag.Int("mt", 0, "Margin Top")
 var marginLeft = flag.Int("ml", 0, "Margin Left")
@@ -114,6 +114,11 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		imgSizeScaled = *imgSize * 6 / (6 + overflow)
 	} else {
 		imgSizeScaled = *imgSize
+	}
+
+	if *launcherPos == "start" {
+		button := launcherButton()
+		mainBox.PackStart(button, false, false, 0)
 	}
 
 	var alreadyAdded []string
@@ -226,34 +231,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		}
 	}
 
-	if !*noLauncher && *launcherCmd != "" {
-		button, _ := gtk.ButtonNew()
-		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled, imgSizeScaled)
-		if err == nil {
-			image, _ := gtk.ImageNewFromPixbuf(pixbuf)
-			button.SetImage(image)
-			button.SetAlwaysShowImage(true)
-
-			button.Connect("clicked", func() {
-				elements := strings.Split(*launcherCmd, " ")
-				cmd := exec.Command(elements[0], elements[1:]...)
-
-				go func() {
-					err := cmd.Run()
-					if err != nil {
-						log.Warnf("Unable to start program: %s", err.Error())
-					}
-				}()
-
-				if *autohide {
-					win.Hide()
-				}
-			})
-			button.Connect("enter-notify-event", cancelClose)
-		} else {
-			log.Errorf("Unable to show grid button: %s", err.Error())
-		}
-
+	if *launcherPos == "end" {
+		button := launcherButton()
 		mainBox.PackStart(button, false, false, 0)
 	}
 

@@ -89,10 +89,10 @@ Usage of nwg-dock:
     	Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear; set 0 to disable (default 20)
   -i int
     	Icon size (default 48)
-  -ico string
-    	alternative name or path for the launcher ICOn
   -l string
     	Layer "overlay", "top" or "bottom" (default "overlay")
+  -lp string
+    	Launcher button position, 'start' or 'end' (default "end")
   -mb int
     	Margin Bottom
   -ml int

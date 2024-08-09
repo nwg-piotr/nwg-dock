@@ -329,6 +329,38 @@ func pinnedMenuContext(taskID string) gtk.Menu {
 	return *menu
 }
 
+func launcherButton() *gtk.Button {
+	button, _ := gtk.ButtonNew()
+	if !*noLauncher && *launcherCmd != "" {
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled, imgSizeScaled)
+		if err == nil {
+			image, _ := gtk.ImageNewFromPixbuf(pixbuf)
+			button.SetImage(image)
+			button.SetAlwaysShowImage(true)
+
+			button.Connect("clicked", func() {
+				elements := strings.Split(*launcherCmd, " ")
+				cmd := exec.Command(elements[0], elements[1:]...)
+
+				go func() {
+					err := cmd.Run()
+					if err != nil {
+						log.Warnf("Unable to start program: %s", err.Error())
+					}
+				}()
+
+				if *autohide {
+					win.Hide()
+				}
+			})
+			button.Connect("enter-notify-event", cancelClose)
+		} else {
+			log.Errorf("Unable to show grid button: %s", err.Error())
+		}
+	}
+	return button
+}
+
 /*
 Window on-leave-notify event hides the dock with glib Timeout 1000 ms.
 We might have left the window by accident, so let's clear the timeout if window re-entered.
