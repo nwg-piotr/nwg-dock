@@ -330,8 +330,8 @@ func pinnedMenuContext(taskID string) gtk.Menu {
 }
 
 func launcherButton() *gtk.Button {
-	button, _ := gtk.ButtonNew()
 	if !*noLauncher && *launcherCmd != "" {
+		button, _ := gtk.ButtonNew()
 		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ := gtk.ImageNewFromPixbuf(pixbuf)
@@ -357,8 +357,9 @@ func launcherButton() *gtk.Button {
 		} else {
 			log.Errorf("Unable to show grid button: %s", err.Error())
 		}
+		return button
 	}
-	return button
+	return nil
 }
 
 /*
