@@ -47,6 +47,7 @@ var (
 	win                                *gtk.Window
 	windowStateChannel                 chan WindowState = make(chan WindowState, 1)
 	detectorEnteredAt                  int64
+	appIdsToIgnore                     []string
 )
 
 // Flags
@@ -55,6 +56,7 @@ var targetOutput = flag.String("o", "", "name of Output to display the dock on")
 var displayVersion = flag.Bool("v", false, "display Version information")
 var autohide = flag.Bool("d", false, "auto-hiDe: show dock when hotspot hovered, close when left or a button clicked")
 var full = flag.Bool("f", false, "take Full screen width/height")
+var ignoreAppIds = flag.String("g", "", "quote-delimited, space-separated app_id list to iGnore in the dock")
 var numWS = flag.Int64("w", 8, "number of Workspaces you use")
 var position = flag.String("p", "bottom", "Position: \"bottom\", \"top\" or \"left\"")
 var exclusive = flag.Bool("x", false, "set eXclusive zone: move other windows aside; overrides the \"-l\" argument")
@@ -131,16 +133,18 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		} else {
 			instances := taskInstances(pin, tasks)
 			task := instances[0]
-			if len(instances) == 1 {
-				button := taskButton(task, instances)
-				mainBox.PackStart(button, false, false, 0)
-			} else if !isIn(alreadyAdded, task.ID) {
-				button := taskButton(task, instances)
-				mainBox.PackStart(button, false, false, 0)
-				alreadyAdded = append(alreadyAdded, task.ID)
-				taskMenu(task.ID, instances)
-			} else {
-				continue
+			if !isIn(appIdsToIgnore, task.ID) {
+				if len(instances) == 1 {
+					button := taskButton(task, instances)
+					mainBox.PackStart(button, false, false, 0)
+				} else if !isIn(alreadyAdded, task.ID) {
+					button := taskButton(task, instances)
+					mainBox.PackStart(button, false, false, 0)
+					alreadyAdded = append(alreadyAdded, task.ID)
+					taskMenu(task.ID, instances)
+				} else {
+					continue
+				}
 			}
 		}
 	}
@@ -149,16 +153,18 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	for _, task := range tasks {
 		if !inPinned(task.ID) {
 			instances := taskInstances(task.ID, tasks)
-			if len(instances) == 1 {
-				button := taskButton(task, instances)
-				mainBox.PackStart(button, false, false, 0)
-			} else if !isIn(alreadyAdded, task.ID) {
-				button := taskButton(task, instances)
-				mainBox.PackStart(button, false, false, 0)
-				alreadyAdded = append(alreadyAdded, task.ID)
-				taskMenu(task.ID, instances)
-			} else {
-				continue
+			if !isIn(appIdsToIgnore, task.ID) {
+				if len(instances) == 1 {
+					button := taskButton(task, instances)
+					mainBox.PackStart(button, false, false, 0)
+				} else if !isIn(alreadyAdded, task.ID) {
+					button := taskButton(task, instances)
+					mainBox.PackStart(button, false, false, 0)
+					alreadyAdded = append(alreadyAdded, task.ID)
+					taskMenu(task.ID, instances)
+				} else {
+					continue
+				}
 			}
 		}
 	}
@@ -347,6 +353,10 @@ func main() {
 	}
 	if *resident {
 		log.Info("Starting in resident mode")
+	}
+	if *ignoreAppIds != "" {
+		log.Infof("Ignoring app_ids: '%s'", *ignoreAppIds)
+		appIdsToIgnore = strings.Split(*ignoreAppIds, " ")
 	}
 
 	// Gentle SIGTERM handler thanks to reiki4040 https://gist.github.com/reiki4040/be3705f307d3cd136e85
