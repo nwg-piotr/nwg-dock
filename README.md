@@ -85,6 +85,8 @@ Usage of nwg-dock:
   -debug
     	turn on debug messages
   -f	take Full screen width/height
+  -g string
+    	quote-delimited, space-separated app_id list to iGnore in the dock
   -hd int
     	Hotspot Delay [ms]; the smaller, the faster mouse pointer needs to enter hotspot for the dock to appear; set 0 to disable (default 20)
   -i int
