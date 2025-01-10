@@ -128,8 +128,12 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 	var alreadyAdded []string
 	for _, pin := range pinned {
 		if !inTasks(tasks, pin) {
-			button := pinnedButton(pin)
-			mainBox.PackStart(button, false, false, 0)
+			if !isIn(appIdsToIgnore, pin) {
+				button := pinnedButton(pin)
+				mainBox.PackStart(button, false, false, 0)
+			} else {
+				log.Debugf("Ignoring pin '%s'", pin)
+			}
 		} else {
 			instances := taskInstances(pin, tasks)
 			task := instances[0]
@@ -145,6 +149,8 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 				} else {
 					continue
 				}
+			} else {
+				log.Debugf("Ignoring instance '%s'", task.ID)
 			}
 		}
 	}
