@@ -48,6 +48,9 @@ var (
 	windowStateChannel                 chan WindowState = make(chan WindowState, 1)
 	detectorEnteredAt                  int64
 	appIdsToIgnore                     []string
+	currentWsNumIcon                   string
+	activeWorkspaceIcon                string
+	cssFilePath                        string
 )
 
 // Flags
@@ -180,8 +183,14 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 		if e != nil {
 			return
 		}
-		wsPixbuf, e := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum)),
-			imgSizeScaled, imgSizeScaled)
+		if pathExists(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum))) {
+			currentWsNumIcon = filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", currentWsNum))
+		} else if pathExists(fmt.Sprintf("/usr/local/share/nwg-dock/images/%v.svg", currentWsNum)) {
+			currentWsNumIcon = fmt.Sprintf("/usr/local/share/nwg-dock/images/%v.svg", currentWsNum)
+		} else {
+			currentWsNumIcon = fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", currentWsNum)
+		}
+		wsPixbuf, e := gdk.PixbufNewFromFileAtSize(currentWsNumIcon, imgSizeScaled, imgSizeScaled)
 		if e == nil {
 			wsImage, _ := gtk.ImageNewFromPixbuf(wsPixbuf)
 			wsButton.SetImage(wsImage)
@@ -195,8 +204,14 @@ func buildMainBox(tasks []task, vbox *gtk.Box) {
 					targetWsNum = activeWorkspace
 
 					glib.TimeoutAdd(0, func() bool {
-						wsPixbuf, e = gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace)),
-							imgSizeScaled, imgSizeScaled)
+						if pathExists(filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace))) {
+							activeWorkspaceIcon = filepath.Join(dataHome, fmt.Sprintf("nwg-dock/images/%v.svg", activeWorkspace))
+						} else if pathExists(fmt.Sprintf("/usr/local/share/nwg-dock/images/%v.svg", activeWorkspace)) {
+							activeWorkspaceIcon = fmt.Sprintf("/usr/local/share/nwg-dock/images/%v.svg", activeWorkspace)
+						} else {
+							activeWorkspaceIcon = fmt.Sprintf("/usr/share/nwg-dock/images/%v.svg", activeWorkspace)
+						}
+						wsPixbuf, e = gdk.PixbufNewFromFileAtSize(activeWorkspaceIcon, imgSizeScaled, imgSizeScaled)
 
 						if e == nil {
 							wsImage, _ = gtk.ImageNewFromPixbuf(wsPixbuf)
@@ -442,7 +457,14 @@ func main() {
 	createDir(configDirectory)
 
 	if !pathExists(fmt.Sprintf("%s/style.css", configDirectory)) {
-		err := copyFile(filepath.Join(dataHome, "nwg-dock/style.css"), fmt.Sprintf("%s/style.css", configDirectory))
+		if pathExists(filepath.Join(dataHome, "nwg-dock/style.css")) {
+			cssFilePath = filepath.Join(dataHome, "nwg-dock/style.css")
+		} else if pathExists("/usr/local/share/nwg-dock/style.css"){
+			cssFilePath = "/usr/local/share/nwg-dock/style.css"
+		} else {
+			cssFilePath = "/usr/share/nwg-dock/style.css"
+		}
+		err := copyFile(cssFilePath, fmt.Sprintf("%s/style.css", configDirectory))
 		if err != nil {
 			log.Warnf("Error copying file: %s", err)
 		}

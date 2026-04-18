@@ -24,6 +24,15 @@ import (
 
 var descendants []sway.Node
 
+// Icons
+var (
+	iconIconMissing                    string
+	iconTaskEmpty                      string
+	iconGrid                           string
+	iconTaskSingle                     string
+	iconTaskMultiple                   string
+)
+
 type task struct {
 	conID int64
 	ID    string // will be created out of app_id or window class
@@ -269,6 +278,15 @@ func workspaceNum(workspaces []sway.Workspace, name string) int64 {
 	return 0
 }
 
+func pathExists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
+}
+
 func pinnedButton(ID string) *gtk.Box {
 	box, _ := gtk.BoxNew(gtk.ORIENTATION_VERTICAL, 0)
 	button, _ := gtk.ButtonNew()
@@ -276,8 +294,14 @@ func pinnedButton(ID string) *gtk.Box {
 
 	image, err := createImage(ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg"),
-			imgSizeScaled, imgSizeScaled)
+		if pathExists(filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg")) {
+			iconIconMissing = filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg")
+		} else if pathExists("/usr/local/share/nwg-dock/images/icon-missing.svg") {
+			iconIconMissing = "/usr/local/share/nwg-dock/images/icon-missing.svg"
+		} else {
+			iconIconMissing = "/usr/share/nwg-dock/images/icon-missing.svg"
+		}
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(iconIconMissing, imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -291,8 +315,14 @@ func pinnedButton(ID string) *gtk.Box {
 		button.SetAlwaysShowImage(true)
 	}
 	button.SetTooltipText(getName(ID))
-	pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-empty.svg"),
-		imgSizeScaled, imgSizeScaled/8)
+	if pathExists(filepath.Join(dataHome, "nwg-dock/images/task-empty.svg")) {
+		iconTaskEmpty = filepath.Join(dataHome, "nwg-dock/images/task-empty.svg")
+	} else if pathExists("/usr/local/share/nwg-dock/images/task-empty.svg") {
+		iconTaskEmpty = "/usr/local/share/nwg-dock/images/task-empty.svg"
+	} else {
+		iconTaskEmpty = "/usr/share/nwg-dock/images/task-empty.svg"
+	}
+	pixbuf, _ := gdk.PixbufNewFromFileAtSize(iconTaskEmpty, imgSizeScaled, imgSizeScaled/8)
 	img, _ := gtk.ImageNewFromPixbuf(pixbuf)
 	box.PackStart(img, false, false, 0)
 
@@ -332,7 +362,15 @@ func pinnedMenuContext(taskID string) gtk.Menu {
 func launcherButton() *gtk.Button {
 	if !*noLauncher && *launcherCmd != "" {
 		button, _ := gtk.ButtonNew()
-		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/grid.svg"), imgSizeScaled, imgSizeScaled)
+
+		if pathExists(filepath.Join(dataHome, "nwg-dock/images/grid.svg")) {
+			iconGrid = filepath.Join(dataHome, "nwg-dock/images/grid.svg")
+		} else if pathExists("/usr/local/share/nwg-dock/images/grid.svg") {
+			iconGrid = "/usr/local/share/nwg-dock/images/grid.svg"
+		} else {
+			iconGrid = "/usr/share/nwg-dock/images/grid.svg"
+		}
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(iconGrid, imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ := gtk.ImageNewFromPixbuf(pixbuf)
 			button.SetImage(image)
@@ -382,8 +420,14 @@ func taskButton(t task, instances []task) *gtk.Box {
 
 	image, err := createImage(t.ID, imgSizeScaled)
 	if err != nil {
-		pixbuf, err := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg"),
-			imgSizeScaled, imgSizeScaled)
+		if pathExists(filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg")) {
+			iconIconMissing = filepath.Join(dataHome, "nwg-dock/images/icon-missing.svg")
+		} else if pathExists("/usr/local/share/nwg-dock/images/icon-missing.svg") {
+			iconIconMissing = "/usr/local/share/nwg-dock/images/icon-missing.svg"
+		} else {
+			iconIconMissing = "/usr/share/nwg-dock/images/icon-missing.svg"
+		}
+		pixbuf, err := gdk.PixbufNewFromFileAtSize(iconIconMissing, imgSizeScaled, imgSizeScaled)
 		if err == nil {
 			image, _ = gtk.ImageNewFromPixbuf(pixbuf)
 		} else {
@@ -398,13 +442,26 @@ func taskButton(t task, instances []task) *gtk.Box {
 	}
 	button.SetTooltipText(getName(t.ID))
 	var img *gtk.Image
+
 	if len(instances) < 2 {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-single.svg"),
-			imgSizeScaled, imgSizeScaled/8)
+		if pathExists(filepath.Join(dataHome, "nwg-dock/images/task-single.svg")) {
+			iconTaskSingle = filepath.Join(dataHome, "nwg-dock/images/task-single.svg")
+		} else if pathExists("/usr/local/share/nwg-dock/images/task-single.svg") {
+			iconTaskSingle = "/usr/local/share/nwg-dock/images/task-single.svg"
+		} else {
+			iconTaskSingle = "/usr/share/nwg-dock/images/task-single.svg"
+		}
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize(iconTaskSingle, imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	} else {
-		pixbuf, _ := gdk.PixbufNewFromFileAtSize(filepath.Join(dataHome, "nwg-dock/images/task-multiple.svg"),
-			imgSizeScaled, imgSizeScaled/8)
+		if pathExists(filepath.Join(dataHome, "nwg-dock/images/task-multiple.svg")) {
+			iconTaskMultiple = filepath.Join(dataHome, "nwg-dock/images/task-multiple.svg")
+		} else if pathExists("/usr/local/share/nwg-dock/images/task-multiple.svg") {
+			iconTaskMultiple = "/usr/local/share/nwg-dock/images/task-multiple.svg"
+		} else {
+			iconTaskMultiple = "/usr/share/nwg-dock/images/task-multiple.svg"
+		}
+		pixbuf, _ := gdk.PixbufNewFromFileAtSize(iconTaskMultiple, imgSizeScaled, imgSizeScaled/8)
 		img, _ = gtk.ImageNewFromPixbuf(pixbuf)
 	}
 	box.PackStart(img, false, false, 0)
@@ -873,15 +930,6 @@ func getName(appName string) string {
 		}
 	}
 	return name
-}
-
-func pathExists(name string) bool {
-	if _, err := os.Stat(name); err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
-	}
-	return true
 }
 
 func loadTextFile(path string) ([]string, error) {
